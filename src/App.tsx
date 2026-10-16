@@ -208,12 +208,12 @@ function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   );
 }
 
-// 3. Загрузка внешней GLB 3D-модели (public/models/scene.glb)
+// 3. Загрузка внешней GLB 3D-модели (public/models/wicker_basket_with_firewood.glb или scene.glb)
 function ModelScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  const { scene } = useGLTF('./models/scene.glb');
+  const { scene } = useGLTF('./models/wicker_basket_with_firewood.glb');
 
   return (
-    <primitive object={scene} position={[0, -1, 0]}>
+    <primitive object={scene} position={[0, -0.5, 0]} scale={1.2}>
       <Hotspot position={[0, 1.8, 0.3]} icon={<BookOpen size={18} />} label="Биография" onClick={() => onSelect('biography')} />
       <Hotspot position={[-0.9, 1.2, 0.4]} icon={<Volume2 size={18} />} label="Аудиоархив" onClick={() => onSelect('audio')} />
       <Hotspot position={[0.9, 1.2, 0.4]} icon={<Film size={18} />} label="Видеохроника" onClick={() => onSelect('video')} />
