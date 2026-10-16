@@ -16,73 +16,124 @@ body, html, #root {
 /* Верхняя информационная панель */
 .header-overlay {
   position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
+  top: 1.25rem;
+  left: 1.25rem;
   z-index: 10;
-  background: rgba(13, 15, 18, 0.82);
+  background: rgba(13, 15, 18, 0.85);
   padding: 1rem 1.25rem;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  max-width: 480px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  max-width: 460px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
 }
 
 .header-overlay h1 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #f8fafc;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   letter-spacing: -0.01em;
 }
 
 .header-overlay p {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #94a3b8;
   line-height: 1.4;
 }
 
-.model-toggle-badge {
+/* Переключатель режимов сцены */
+.mode-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mode-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.5rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  background: rgba(255, 255, 255, 0.08);
-  color: #cbd5e1;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  pointer-events: auto;
   transition: all 0.2s ease;
 }
 
-.model-toggle-badge:hover {
-  background: rgba(255, 255, 255, 0.15);
+.mode-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
   color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.mode-btn.active {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
 }
 
 /* Инструкция по управлению камерой */
 .controls-hint {
   position: absolute;
-  bottom: 1.5rem;
-  left: 1.5rem;
+  bottom: 1.25rem;
+  left: 1.25rem;
   z-index: 10;
   pointer-events: none;
   font-size: 0.75rem;
-  color: #64748b;
-  background: rgba(13, 15, 18, 0.7);
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(4px);
+  color: #cbd5e1;
+  background: rgba(13, 15, 18, 0.75);
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Индикатор локации 360 */
+.location-badge {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 10;
+  background: rgba(13, 15, 18, 0.8);
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  font-size: 0.78rem;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.location-badge span {
+  color: #ef4444;
+  font-weight: 600;
 }
 
 /* Пульсирующий маркер 3D (Hotspot) */
+.hotspot-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
 .hotspot-pin {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: #dc2626;
   border: 2px solid #ffffff;
@@ -92,15 +143,16 @@ body, html, #root {
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-  box-shadow: 0 0 16px rgba(220, 38, 38, 0.85);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 18px rgba(220, 38, 38, 0.9);
   outline: none;
   padding: 0;
 }
 
 .hotspot-pin:hover {
-  transform: scale(1.15);
+  transform: scale(1.18);
   background: #ef4444;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 1);
 }
 
 .hotspot-pin::after {
@@ -108,21 +160,37 @@ body, html, #root {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 2px solid rgba(220, 38, 38, 0.6);
+  border: 2px solid rgba(239, 68, 68, 0.7);
   animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
 @keyframes pulse-ring {
   0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.hotspot-label {
+  margin-top: 6px;
+  background: rgba(13, 15, 18, 0.88);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* Модальное окно с деталями */
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,15 +206,15 @@ body, html, #root {
   max-width: 580px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.7);
   padding: 1.75rem;
-  animation: modal-enter 0.2s ease-out;
+  animation: modal-enter 0.22s ease-out;
 }
 
 @keyframes modal-enter {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(10px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -175,7 +243,7 @@ body, html, #root {
   color: #94a3b8;
   cursor: pointer;
   padding: 6px;
-  border-radius: 4px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -184,7 +252,7 @@ body, html, #root {
 
 .close-btn:hover {
   color: #f8fafc;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .modal-body {
@@ -204,25 +272,25 @@ body, html, #root {
 .modal-note {
   font-size: 0.8rem;
   color: #94a3b8;
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   font-style: italic;
 }
 
 /* Скрытая ссылка на источники (п. 5.3) */
 .sources-btn {
   position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
+  bottom: 1.25rem;
+  right: 1.25rem;
   z-index: 10;
   background: rgba(13, 15, 18, 0.85);
   color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0.55rem 0.95rem;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 }
 
 .sources-btn:hover {
@@ -233,9 +301,9 @@ body, html, #root {
 
 @media (max-width: 640px) {
   .header-overlay {
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
     max-width: none;
     padding: 0.75rem 1rem;
   }
@@ -245,11 +313,14 @@ body, html, #root {
   .header-overlay p {
     font-size: 0.78rem;
   }
+  .location-badge {
+    display: none;
+  }
   .controls-hint {
     display: none;
   }
   .sources-btn {
-    bottom: 1rem;
-    right: 1rem;
+    bottom: 0.75rem;
+    right: 0.75rem;
   }
 }
