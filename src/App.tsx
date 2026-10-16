@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, Component, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, useTexture, Html, Preload, ContactShadows } from '@react-three/drei';
+import { OrbitControls, useGLTF, useTexture, Html, Preload, ContactShadows, Center } from '@react-three/drei';
 import * as THREE from 'three';
 import { 
   BookOpen, 
@@ -12,11 +12,12 @@ import {
   Landmark,
   Box,
   Compass,
+  RotateCw,
   AlertCircle
 } from 'lucide-react';
 
 type SectionKey = 'biography' | 'audio' | 'video' | 'memory' | 'sources';
-type SceneMode = 'panorama360' | 'monument' | 'model';
+type SceneMode = 'model' | 'panorama360' | 'monument';
 
 interface HotspotProps {
   position: [number, number, number];
@@ -114,6 +115,12 @@ function CameraController({ mode }: { mode: SceneMode }) {
         camera.fov = 65;
         camera.updateProjectionMatrix();
       }
+    } else if (mode === 'model') {
+      camera.position.set(0, 1.4, 3.6);
+      if ('fov' in camera && typeof camera.fov === 'number') {
+        camera.fov = 45;
+        camera.updateProjectionMatrix();
+      }
     } else {
       camera.position.set(0, 1.4, 4.2);
       if ('fov' in camera && typeof camera.fov === 'number') {
@@ -126,35 +133,99 @@ function CameraController({ mode }: { mode: SceneMode }) {
   return null;
 }
 
-// 1. Сцена 360° Иммерсивного тура (хотспоты расставлены по ключевым точкам горного ландшафта)
+// 1. Демо-сцена 3D-Модели: «Полевой быт и память воина-интернационалиста»
+function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
+  const { scene } = useGLTF('./models/wicker_basket_with_firewood.glb');
+
+  useEffect(() => {
+    scene.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+  }, [scene]);
+
+  return (
+    <group position={[0, -0.65, 0]}>
+      {/* Каменная мемориальная площадка / постамент на фоне гор */}
+      <mesh position={[0, 0.05, 0]} receiveShadow>
+        <cylinderGeometry args={[1.6, 1.8, 0.12, 36]} />
+        <meshStandardMaterial color="#22272f" roughness={0.7} metalness={0.2} />
+      </mesh>
+
+      {/* Мемориальная латунная табличка с подписью экспоната */}
+      <mesh position={[0, 0.08, 1.45]} rotation={[-Math.PI / 6, 0, 0]} castShadow>
+        <boxGeometry args={[1.1, 0.22, 0.02]} />
+        <meshStandardMaterial color="#d97706" roughness={0.3} metalness={0.8} />
+      </mesh>
+
+      {/* Теплый свет костра/лампы, подчеркивающий фактуру дерева */}
+      <pointLight position={[0, 0.8, 0.2]} intensity={1.5} color="#fb923c" distance={4} />
+
+      {/* 3D-модель с авто-центрированием Drei <Center> */}
+      <Center bottom position={[0, 0.12, 0]}>
+        <primitive object={scene} scale={0.25} />
+      </Center>
+
+      {/* Интерактивные точки вокруг 3D-модели экспоната */}
+      {/* Точка 1: Биография */}
+      <Hotspot 
+        position={[0, 2.35, 0]} 
+        icon={<BookOpen size={18} />} 
+        label="Биография и боевой путь" 
+        onClick={() => onSelect('biography')} 
+      />
+
+      {/* Точка 2: Песни у костра и воспоминания */}
+      <Hotspot 
+        position={[-1.35, 1.1, 0.3]} 
+        icon={<Volume2 size={18} />} 
+        label="Песни у костра: аудиоархив" 
+        onClick={() => onSelect('audio')} 
+      />
+
+      {/* Точка 3: Кинохроника полевого быта */}
+      <Hotspot 
+        position={[1.35, 1.1, 0.3]} 
+        icon={<Film size={18} />} 
+        label="Хроника событий: видео" 
+        onClick={() => onSelect('video')} 
+      />
+
+      {/* Точка 4: Память и музейная экспозиция */}
+      <Hotspot 
+        position={[0, 0.45, 1.35]} 
+        icon={<MapPin size={18} />} 
+        label="Увековечение памяти земляка" 
+        onClick={() => onSelect('memory')} 
+      />
+    </group>
+  );
+}
+
+// 2. Сцена 360° Иммерсивного тура (хотспоты расставлены по ключевым точкам горного ландшафта)
 function Panorama360Scene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   return (
     <group>
-      {/* Точка 1: Биография — на фоне высокого заснеженного перевала по центру */}
       <Hotspot 
         position={[0, 1.3, -6.2]} 
         icon={<BookOpen size={18} />} 
         label="Биография и боевые заслуги" 
         onClick={() => onSelect('biography')} 
       />
-
-      {/* Точка 2: Аудиоархив — на скальном массиве справа */}
       <Hotspot 
         position={[5.6, 0.6, -2.8]} 
         icon={<Volume2 size={18} />} 
         label="Голоса памяти: аудиоархив" 
         onClick={() => onSelect('audio')} 
       />
-
-      {/* Точка 3: Видеохроника — над серпантином горной дороги Саланга */}
       <Hotspot 
         position={[2.4, -1.6, -5.2]} 
         icon={<Film size={18} />} 
         label="Хроника событий: видео" 
         onClick={() => onSelect('video')} 
       />
-
-      {/* Точка 4: Память — на горном хребте слева */}
       <Hotspot 
         position={[-5.2, 0.4, -3.8]} 
         icon={<MapPin size={18} />} 
@@ -165,7 +236,7 @@ function Panorama360Scene({ onSelect }: { onSelect: (key: SectionKey) => void })
   );
 }
 
-// 2. Сцена 3D-Обелиска (мемориальная стела на фоне горной панорамы)
+// 3. Сцена 3D-Обелиска (мемориальная стела на фоне горной панорамы)
 function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   return (
     <group position={[0, -0.6, 0]}>
@@ -208,20 +279,6 @@ function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   );
 }
 
-// 3. Загрузка внешней GLB 3D-модели (public/models/wicker_basket_with_firewood.glb или scene.glb)
-function ModelScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  const { scene } = useGLTF('./models/wicker_basket_with_firewood.glb');
-
-  return (
-    <primitive object={scene} position={[0, -0.5, 0]} scale={1.2}>
-      <Hotspot position={[0, 1.8, 0.3]} icon={<BookOpen size={18} />} label="Биография" onClick={() => onSelect('biography')} />
-      <Hotspot position={[-0.9, 1.2, 0.4]} icon={<Volume2 size={18} />} label="Аудиоархив" onClick={() => onSelect('audio')} />
-      <Hotspot position={[0.9, 1.2, 0.4]} icon={<Film size={18} />} label="Видеохроника" onClick={() => onSelect('video')} />
-      <Hotspot position={[0, 0.3, 0.7]} icon={<MapPin size={18} />} label="Память" onClick={() => onSelect('memory')} />
-    </primitive>
-  );
-}
-
 // Error Boundary для безопасной подгрузки GLB
 interface ErrorBoundaryProps {
   fallback: ReactNode;
@@ -259,8 +316,9 @@ class SceneErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
 
 export default function App() {
   const [activeModal, setActiveModal] = useState<SectionKey | null>(null);
-  // Режимы: 360° панорама перевала (по умолчанию), 3D-обелиск или внешняя 3D-модель
-  const [sceneMode, setSceneMode] = useState<SceneMode>('panorama360');
+  // Режимы: 3D-модель (по умолчанию для демонстрации), 360° панорама перевала или 3D-обелиск
+  const [sceneMode, setSceneMode] = useState<SceneMode>('model');
+  const [autoRotate, setAutoRotate] = useState<boolean>(true);
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -270,6 +328,15 @@ export default function App() {
         <p>Интерактивный 3D-плакат памяти воина-интернационалиста</p>
 
         <div className="mode-switcher">
+          <button 
+            className={`mode-btn ${sceneMode === 'model' ? 'active' : ''}`}
+            onClick={() => setSceneMode('model')}
+            title="3D-модель полевого быта (дрова и костёр)"
+          >
+            <Box size={13} />
+            3D-Модель: Полевой быт
+          </button>
+
           <button 
             className={`mode-btn ${sceneMode === 'panorama360' ? 'active' : ''}`}
             onClick={() => setSceneMode('panorama360')}
@@ -285,24 +352,37 @@ export default function App() {
             title="3D-Стела на фоне гор"
           >
             <Landmark size={13} />
-            3D-Обелиск
-          </button>
-
-          <button 
-            className={`mode-btn ${sceneMode === 'model' ? 'active' : ''}`}
-            onClick={() => setSceneMode('model')}
-            title="3D-модель из public/models/scene.glb"
-          >
-            <Box size={13} />
-            3D-Модель (GLB)
+            3D-Обелиск Памяти
           </button>
         </div>
       </div>
 
-      {/* Индикатор локации в 360° */}
+      {/* Индикатор локации и авто-вращения */}
       <div className="location-badge">
         <Compass size={15} color="#ef4444" />
-        <span>360°</span> Горный перевал • Гиндукуш
+        <span>360°</span> Перевал Гиндукуш
+        {sceneMode === 'model' && (
+          <button 
+            style={{ 
+              background: autoRotate ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.1)', 
+              border: '1px solid rgba(255,255,255,0.2)', 
+              color: '#fff', 
+              borderRadius: '4px', 
+              padding: '2px 6px', 
+              marginLeft: '6px', 
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.72rem'
+            }}
+            onClick={() => setAutoRotate(!autoRotate)}
+            title="Переключить авто-вращение 3D модели"
+          >
+            <RotateCw size={11} />
+            {autoRotate ? 'Вращение: Вкл' : 'Вращение: Пауза'}
+          </button>
+        )}
       </div>
 
       {/* Подсказка управления */}
@@ -310,7 +390,7 @@ export default function App() {
         {sceneMode === 'panorama360' ? (
           'Вращение: Потяните курсор / Касание • Приближение: Колесо мыши'
         ) : (
-          'Вращение: ЛКМ • Масштаб: Колесо мыши'
+          'Вращение: Зажмите ЛКМ • Масштаб: Колесо мыши'
         )}
       </div>
 
@@ -321,13 +401,13 @@ export default function App() {
 
       {/* 3D Canvas */}
       <Canvas 
-        camera={{ position: [0, 0, 0.01], fov: 65 }}
+        camera={{ position: [0, 1.4, 3.6], fov: 45 }}
         shadows
       >
         <ambientLight intensity={0.9} />
         <directionalLight 
           position={[5, 10, 5]} 
-          intensity={1.6} 
+          intensity={1.8} 
           castShadow 
           shadow-mapSize={[1024, 1024]}
         />
@@ -345,13 +425,51 @@ export default function App() {
               whiteSpace: 'nowrap',
               boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
             }}>
-              Загрузка 360° панорамы...
+              Загрузка 3D-сцены и панорамы...
             </div>
           </Html>
         }>
-          {/* 360° панорама Саланга в качестве Skybox фона */}
+          {/* 360° панорама в качестве Skybox фона */}
           <PanoramaSkybox url="./images/360_01.webp" />
           <CameraController mode={sceneMode} />
+
+          {sceneMode === 'model' && (
+            <SceneErrorBoundary 
+              resetKey={sceneMode}
+              fallback={
+                <Html center>
+                  <div style={{ 
+                    color: '#f87171', 
+                    background: 'rgba(24, 10, 10, 0.92)', 
+                    padding: '1rem 1.25rem', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    maxWidth: '320px',
+                    textAlign: 'center',
+                    fontSize: '0.85rem'
+                  }}>
+                    <AlertCircle size={24} style={{ margin: '0 auto 0.5rem', display: 'block', color: '#ef4444' }} />
+                    <strong>Файл модели не найден</strong>
+                    <p style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.78rem' }}>
+                      Поместите 3D-модель в <code>public/models/wicker_basket_with_firewood.glb</code>.
+                    </p>
+                  </div>
+                </Html>
+              }
+            >
+              <ModelDemoScene onSelect={setActiveModal} />
+              <ContactShadows position={[0, -0.65, 0]} opacity={0.7} scale={6} blur={2.5} />
+              <OrbitControls 
+                enablePan={false}
+                minDistance={1.8} 
+                maxDistance={6} 
+                maxPolarAngle={Math.PI / 2 + 0.02} 
+                target={[0, 0.5, 0]}
+                autoRotate={autoRotate}
+                autoRotateSpeed={1.0}
+              />
+            </SceneErrorBoundary>
+          )}
 
           {sceneMode === 'panorama360' && (
             <>
@@ -378,44 +496,10 @@ export default function App() {
                 maxDistance={7} 
                 maxPolarAngle={Math.PI / 2 + 0.05} 
                 target={[0, 0.8, 0]}
+                autoRotate={autoRotate}
+                autoRotateSpeed={0.8}
               />
             </>
-          )}
-
-          {sceneMode === 'model' && (
-            <SceneErrorBoundary 
-              resetKey={sceneMode}
-              fallback={
-                <Html center>
-                  <div style={{ 
-                    color: '#f87171', 
-                    background: 'rgba(24, 10, 10, 0.92)', 
-                    padding: '1rem 1.25rem', 
-                    borderRadius: '8px', 
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    maxWidth: '320px',
-                    textAlign: 'center',
-                    fontSize: '0.85rem'
-                  }}>
-                    <AlertCircle size={24} style={{ margin: '0 auto 0.5rem', display: 'block', color: '#ef4444' }} />
-                    <strong>Файл scene.glb не найден</strong>
-                    <p style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.78rem' }}>
-                      Поместите 3D-модель в <code>public/models/scene.glb</code> или выберите режим «360° Панорама перевала».
-                    </p>
-                  </div>
-                </Html>
-              }
-            >
-              <ModelScene onSelect={setActiveModal} />
-              <ContactShadows position={[0, -1, 0]} opacity={0.65} scale={10} blur={2.2} />
-              <OrbitControls 
-                enablePan={false}
-                minDistance={2} 
-                maxDistance={7} 
-                maxPolarAngle={Math.PI / 2 + 0.05} 
-                target={[0, 0.5, 0]}
-              />
-            </SceneErrorBoundary>
           )}
 
           <Preload all />
@@ -472,7 +556,7 @@ export default function App() {
                     </div>
                   </div>
                   <div className="modal-note">
-                    Подсказка: замените <code>public/images/hero_photo.jpg</code> на архивную фотографию героя.
+                    Архивная фотография: <code>public/images/hero_photo.jpg</code>.
                   </div>
                 </div>
               )}
@@ -480,7 +564,7 @@ export default function App() {
               {activeModal === 'audio' && (
                 <div>
                   <p>
-                    Аудиозапись воспоминаний сослуживцев, родственников и тематических стихотворений 
+                    Аудиозапись воспоминаний сослуживцев, солдатских песен у костра и стихотворений 
                     времён Афганской войны.
                   </p>
                   <audio className="modal-media" controls src="./audio/voice_archive.mp3">
@@ -495,8 +579,8 @@ export default function App() {
               {activeModal === 'video' && (
                 <div>
                   <p>
-                    Фрагменты интервью с участниками событий, поисковые экспедиции школьного музея 
-                    и документальная кинохроника перевала Саланг.
+                    Фрагменты интервью с участниками событий, кинохроника полевого быта застав 
+                    и документальные съёмки на перевале Саланг.
                   </p>
                   <video 
                     className="modal-media" 
@@ -519,7 +603,7 @@ export default function App() {
                   </p>
                   <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', lineHeight: '1.7' }}>
                     <li>Мемориальная доска на здании школы;</li>
-                    <li>Экспозиция в районном историко-краеведческом музее;</li>
+                    <li>Экспозиция предметов солдатского быта и документов в районном музее;</li>
                     <li>Ежегодные уроки мужества, вахты памяти и памятные турниры;</li>
                     <li>Поисково-исследовательская работа учащихся и волонтёров.</li>
                   </ul>
