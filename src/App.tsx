@@ -116,7 +116,7 @@ function CameraController({ mode }: { mode: SceneMode }) {
         camera.updateProjectionMatrix();
       }
     } else if (mode === 'model') {
-      camera.position.set(0, 1.4, 3.6);
+      camera.position.set(0, 0.5, 3.4);
       if ('fov' in camera && typeof camera.fov === 'number') {
         camera.fov = 45;
         camera.updateProjectionMatrix();
@@ -147,31 +147,19 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   }, [scene]);
 
   return (
-    <group position={[0, -0.65, 0]}>
-      {/* Каменная мемориальная площадка / постамент на фоне гор */}
-      <mesh position={[0, 0.05, 0]} receiveShadow>
-        <cylinderGeometry args={[1.6, 1.8, 0.12, 36]} />
-        <meshStandardMaterial color="#22272f" roughness={0.7} metalness={0.2} />
-      </mesh>
-
-      {/* Мемориальная латунная табличка с подписью экспоната */}
-      <mesh position={[0, 0.08, 1.45]} rotation={[-Math.PI / 6, 0, 0]} castShadow>
-        <boxGeometry args={[1.1, 0.22, 0.02]} />
-        <meshStandardMaterial color="#d97706" roughness={0.3} metalness={0.8} />
-      </mesh>
-
-      {/* Теплый свет костра/лампы, подчеркивающий фактуру дерева */}
-      <pointLight position={[0, 0.8, 0.2]} intensity={1.5} color="#fb923c" distance={4} />
+    <group position={[0, 0.4, 0]}>
+      {/* Теплый свет костра/лампы, мягко подсвечивающий фактуру дерева */}
+      <pointLight position={[0, 0.3, 0.3]} intensity={1.8} color="#fb923c" distance={4} />
 
       {/* 3D-модель с авто-центрированием Drei <Center> */}
-      <Center bottom position={[0, 0.12, 0]}>
+      <Center position={[0, 0, 0]}>
         <primitive object={scene} scale={0.25} />
       </Center>
 
-      {/* Интерактивные точки вокруг 3D-модели экспоната */}
+      {/* Интерактивные точки вокруг парящей 3D-модели */}
       {/* Точка 1: Биография */}
       <Hotspot 
-        position={[0, 2.35, 0]} 
+        position={[0, 1.45, 0]} 
         icon={<BookOpen size={18} />} 
         label="Биография и боевой путь" 
         onClick={() => onSelect('biography')} 
@@ -179,7 +167,7 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
 
       {/* Точка 2: Песни у костра и воспоминания */}
       <Hotspot 
-        position={[-1.35, 1.1, 0.3]} 
+        position={[-1.4, 0.05, 0.2]} 
         icon={<Volume2 size={18} />} 
         label="Песни у костра: аудиоархив" 
         onClick={() => onSelect('audio')} 
@@ -187,7 +175,7 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
 
       {/* Точка 3: Кинохроника полевого быта */}
       <Hotspot 
-        position={[1.35, 1.1, 0.3]} 
+        position={[1.4, 0.05, 0.2]} 
         icon={<Film size={18} />} 
         label="Хроника событий: видео" 
         onClick={() => onSelect('video')} 
@@ -195,7 +183,7 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
 
       {/* Точка 4: Память и музейная экспозиция */}
       <Hotspot 
-        position={[0, 0.45, 1.35]} 
+        position={[0, -1.3, 0.3]} 
         icon={<MapPin size={18} />} 
         label="Увековечение памяти земляка" 
         onClick={() => onSelect('memory')} 
@@ -401,7 +389,7 @@ export default function App() {
 
       {/* 3D Canvas */}
       <Canvas 
-        camera={{ position: [0, 1.4, 3.6], fov: 45 }}
+        camera={{ position: [0, 0.5, 3.4], fov: 45 }}
         shadows
       >
         <ambientLight intensity={0.9} />
@@ -458,13 +446,12 @@ export default function App() {
               }
             >
               <ModelDemoScene onSelect={setActiveModal} />
-              <ContactShadows position={[0, -0.65, 0]} opacity={0.7} scale={6} blur={2.5} />
               <OrbitControls 
                 enablePan={false}
-                minDistance={1.8} 
+                minDistance={1.6} 
                 maxDistance={6} 
-                maxPolarAngle={Math.PI / 2 + 0.02} 
-                target={[0, 0.5, 0]}
+                maxPolarAngle={Math.PI - 0.05} 
+                target={[0, 0.4, 0]}
                 autoRotate={autoRotate}
                 autoRotateSpeed={1.0}
               />
