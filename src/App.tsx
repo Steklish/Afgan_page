@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, Component, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, useTexture, Html, Preload, ContactShadows, Center } from '@react-three/drei';
+import { OrbitControls, useGLTF, useTexture, Html, Preload, Center, Splat } from '@react-three/drei';
 import * as THREE from 'three';
 import { 
   BookOpen, 
@@ -13,11 +13,12 @@ import {
   Box,
   Compass,
   RotateCw,
+  Sparkles,
   AlertCircle
 } from 'lucide-react';
 
 type SectionKey = 'biography' | 'audio' | 'video' | 'memory' | 'sources';
-type SceneMode = 'model' | 'panorama360' | 'monument';
+type SceneMode = 'model' | 'splat' | 'panorama360' | 'monument';
 
 interface HotspotProps {
   position: [number, number, number];
@@ -121,6 +122,12 @@ function CameraController({ mode }: { mode: SceneMode }) {
         camera.fov = 45;
         camera.updateProjectionMatrix();
       }
+    } else if (mode === 'splat') {
+      camera.position.set(0, 3, 16);
+      if ('fov' in camera && typeof camera.fov === 'number') {
+        camera.fov = 50;
+        camera.updateProjectionMatrix();
+      }
     } else {
       camera.position.set(0, 1.4, 4.2);
       if ('fov' in camera && typeof camera.fov === 'number') {
@@ -157,7 +164,6 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
       </Center>
 
       {/* Интерактивные точки вокруг парящей 3D-модели */}
-      {/* Точка 1: Биография */}
       <Hotspot 
         position={[0, 1.45, 0]} 
         icon={<BookOpen size={18} />} 
@@ -165,7 +171,6 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
         onClick={() => onSelect('biography')} 
       />
 
-      {/* Точка 2: Песни у костра и воспоминания */}
       <Hotspot 
         position={[-1.4, 0.05, 0.2]} 
         icon={<Volume2 size={18} />} 
@@ -173,7 +178,6 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
         onClick={() => onSelect('audio')} 
       />
 
-      {/* Точка 3: Кинохроника полевого быта */}
       <Hotspot 
         position={[1.4, 0.05, 0.2]} 
         icon={<Film size={18} />} 
@@ -181,7 +185,6 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
         onClick={() => onSelect('video')} 
       />
 
-      {/* Точка 4: Память и музейная экспозиция */}
       <Hotspot 
         position={[0, -1.3, 0.3]} 
         icon={<MapPin size={18} />} 
@@ -192,7 +195,50 @@ function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   );
 }
 
-// 2. Сцена 360° Иммерсивного тура (хотспоты расставлены по ключевым точкам горного ландшафта)
+// 2. Сцена 3D Gaussian Splatting (объемный фотограмметрический скан)
+function GaussianSplatScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
+  return (
+    <group position={[0, 0, 0]}>
+      {/* 3D Gaussian Splatting через нативный шейдер Drei */}
+      <Splat 
+        src="./g_splats/output_501_01.splat" 
+        toneMapped={false}
+        alphaTest={0.02}
+      />
+
+      {/* Интерактивные точки, привязанные к объёмному скану */}
+      <Hotspot 
+        position={[0, 4, 0]} 
+        icon={<BookOpen size={18} />} 
+        label="Биография и боевой путь" 
+        onClick={() => onSelect('biography')} 
+      />
+
+      <Hotspot 
+        position={[-6, 1.5, 3]} 
+        icon={<Volume2 size={18} />} 
+        label="Голоса памяти: аудиоархив" 
+        onClick={() => onSelect('audio')} 
+      />
+
+      <Hotspot 
+        position={[6, 1.5, 3]} 
+        icon={<Film size={18} />} 
+        label="Хроника событий: видео" 
+        onClick={() => onSelect('video')} 
+      />
+
+      <Hotspot 
+        position={[0, -2, 7]} 
+        icon={<MapPin size={18} />} 
+        label="Увековечение памяти земляка" 
+        onClick={() => onSelect('memory')} 
+      />
+    </group>
+  );
+}
+
+// 3. Сцена 360° Иммерсивного тура (хотспоты расставлены по ключевым точкам горного ландшафта)
 function Panorama360Scene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   return (
     <group>
@@ -224,7 +270,7 @@ function Panorama360Scene({ onSelect }: { onSelect: (key: SectionKey) => void })
   );
 }
 
-// 3. Сцена 3D-Обелиска (мемориальная стела на фоне горной панорамы)
+// 4. Сцена 3D-Обелиска (мемориальная стела на фоне горной панорамы)
 function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   return (
     <group position={[0, -0.6, 0]}>
@@ -267,7 +313,7 @@ function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
   );
 }
 
-// Error Boundary для безопасной подгрузки GLB
+// Error Boundary для безопасной подгрузки внешних ресурсов
 interface ErrorBoundaryProps {
   fallback: ReactNode;
   children: ReactNode;
@@ -304,7 +350,7 @@ class SceneErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
 
 export default function App() {
   const [activeModal, setActiveModal] = useState<SectionKey | null>(null);
-  // Режимы: 3D-модель (по умолчанию для демонстрации), 360° панорама перевала или 3D-обелиск
+  // Режимы: 3D-модель (по умолчанию), 3D Gaussian Splat, 360° панорама или 3D-обелиск
   const [sceneMode, setSceneMode] = useState<SceneMode>('model');
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
 
@@ -322,7 +368,16 @@ export default function App() {
             title="3D-модель полевого быта (дрова и костёр)"
           >
             <Box size={13} />
-            3D-Модель: Полевой быт
+            3D-Модель: Быт
+          </button>
+
+          <button 
+            className={`mode-btn ${sceneMode === 'splat' ? 'active' : ''}`}
+            onClick={() => setSceneMode('splat')}
+            title="3D Gaussian Splatting (объемный скан)"
+          >
+            <Sparkles size={13} />
+            3D Gaussian Splat
           </button>
 
           <button 
@@ -331,7 +386,7 @@ export default function App() {
             title="360° Панорамный осмотр перевала"
           >
             <Mountain size={13} />
-            360° Панорама перевала
+            360° Панорама
           </button>
 
           <button 
@@ -340,7 +395,7 @@ export default function App() {
             title="3D-Стела на фоне гор"
           >
             <Landmark size={13} />
-            3D-Обелиск Памяти
+            3D-Обелиск
           </button>
         </div>
       </div>
@@ -349,7 +404,7 @@ export default function App() {
       <div className="location-badge">
         <Compass size={15} color="#ef4444" />
         <span>360°</span> Перевал Гиндукуш
-        {sceneMode === 'model' && (
+        {(sceneMode === 'model' || sceneMode === 'splat') && (
           <button 
             style={{ 
               background: autoRotate ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.1)', 
@@ -365,7 +420,7 @@ export default function App() {
               fontSize: '0.72rem'
             }}
             onClick={() => setAutoRotate(!autoRotate)}
-            title="Переключить авто-вращение 3D модели"
+            title="Переключить авто-вращение сцены"
           >
             <RotateCw size={11} />
             {autoRotate ? 'Вращение: Вкл' : 'Вращение: Пауза'}
@@ -377,6 +432,8 @@ export default function App() {
       <div className="controls-hint">
         {sceneMode === 'panorama360' ? (
           'Вращение: Потяните курсор / Касание • Приближение: Колесо мыши'
+        ) : sceneMode === 'splat' ? (
+          'Вращение: ЛКМ • Перемещение: ПКМ • Масштаб: Колесо мыши'
         ) : (
           'Вращение: Зажмите ЛКМ • Масштаб: Колесо мыши'
         )}
@@ -413,7 +470,7 @@ export default function App() {
               whiteSpace: 'nowrap',
               boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
             }}>
-              Загрузка 3D-сцены и панорамы...
+              Загрузка 3D-сцены...
             </div>
           </Html>
         }>
@@ -458,6 +515,42 @@ export default function App() {
             </SceneErrorBoundary>
           )}
 
+          {sceneMode === 'splat' && (
+            <SceneErrorBoundary 
+              resetKey={sceneMode}
+              fallback={
+                <Html center>
+                  <div style={{ 
+                    color: '#f87171', 
+                    background: 'rgba(24, 10, 10, 0.92)', 
+                    padding: '1rem 1.25rem', 
+                    borderRadius: '8px', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    maxWidth: '320px',
+                    textAlign: 'center',
+                    fontSize: '0.85rem'
+                  }}>
+                    <AlertCircle size={24} style={{ margin: '0 auto 0.5rem', display: 'block', color: '#ef4444' }} />
+                    <strong>Файл Gaussian Splat не найден</strong>
+                    <p style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.78rem' }}>
+                      Проверьте наличие файла в <code>public/g_splats/output_501_01.splat</code>.
+                    </p>
+                  </div>
+                </Html>
+              }
+            >
+              <GaussianSplatScene onSelect={setActiveModal} />
+              <OrbitControls 
+                enablePan={true}
+                minDistance={1} 
+                maxDistance={120} 
+                target={[0, 0, 0]}
+                autoRotate={autoRotate}
+                autoRotateSpeed={0.5}
+              />
+            </SceneErrorBoundary>
+          )}
+
           {sceneMode === 'panorama360' && (
             <>
               <Panorama360Scene onSelect={setActiveModal} />
@@ -476,7 +569,6 @@ export default function App() {
           {sceneMode === 'monument' && (
             <>
               <MonumentScene onSelect={setActiveModal} />
-              <ContactShadows position={[0, -0.6, 0]} opacity={0.65} scale={10} blur={2.2} />
               <OrbitControls 
                 enablePan={false}
                 minDistance={2} 
