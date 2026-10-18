@@ -9,27 +9,27 @@ body, html, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #0d0f12;
+  background-color: #0b0d10;
   color: #e2e8f0;
 }
 
-/* Верхняя информационная панель */
+/* Верхняя навигационная панель выставки */
 .header-overlay {
   position: absolute;
   top: 1.25rem;
   left: 1.25rem;
   z-index: 10;
-  background: rgba(13, 15, 18, 0.85);
+  background: rgba(13, 15, 18, 0.88);
   padding: 1rem 1.25rem;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  max-width: 460px;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  max-width: 520px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
 }
 
 .header-overlay h1 {
-  font-size: 1.2rem;
+  font-size: 1.22rem;
   font-weight: 700;
   color: #f8fafc;
   margin-bottom: 0.2rem;
@@ -42,42 +42,179 @@ body, html, #root {
   line-height: 1.4;
 }
 
-/* Переключатель режимов сцены */
+/* Залы и сцены выставки (навигационные вкладки) */
 .mode-switcher {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin-top: 0.75rem;
-  padding-top: 0.65rem;
+  padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 6px;
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 500;
   background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
+  color: #cbd5e1;
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .mode-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
   border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .mode-btn.active {
   background: #dc2626;
   color: #ffffff;
   border-color: #ef4444;
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5);
+  box-shadow: 0 0 14px rgba(220, 38, 38, 0.6);
+}
+
+/* Нижняя панель переключения элементов в зале (медали / камеры / фото) */
+.sub-selector-container {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 90vw;
+}
+
+.sub-selector-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 0.4rem;
+  background: rgba(13, 15, 18, 0.88);
+  padding: 0.45rem 0.7rem;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  max-width: 100%;
+}
+
+.sub-pill-btn {
+  white-space: nowrap;
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.sub-pill-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+.sub-pill-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
+}
+
+/* Музейная карточка экспоната */
+.museum-card {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 10;
+  background: rgba(13, 15, 18, 0.88);
+  padding: 1.1rem 1.3rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  max-width: 380px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  animation: card-enter 0.25s ease-out;
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.museum-card h3 {
+  font-size: 1.05rem;
+  color: #f8fafc;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.museum-card-subtitle {
+  font-size: 0.78rem;
+  color: #f59e0b;
+  font-weight: 500;
+  margin-bottom: 0.65rem;
+}
+
+.museum-card p {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.museum-card-note {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.museum-card-note code {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* Кнопка на 3D карточке альбома */
+.album-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(13, 15, 18, 0.92);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.album-card-btn:hover {
+  background: #dc2626;
+  border-color: #ef4444;
+  transform: scale(1.05);
 }
 
 /* Инструкция по управлению камерой */
@@ -89,7 +226,7 @@ body, html, #root {
   pointer-events: none;
   font-size: 0.75rem;
   color: #cbd5e1;
-  background: rgba(13, 15, 18, 0.75);
+  background: rgba(13, 15, 18, 0.78);
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -99,27 +236,11 @@ body, html, #root {
   gap: 0.5rem;
 }
 
-/* Индикатор локации 360 */
-.location-badge {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  z-index: 10;
-  background: rgba(13, 15, 18, 0.8);
-  padding: 0.5rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  font-size: 0.78rem;
-  color: #f1f5f9;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.location-badge span {
-  color: #ef4444;
-  font-weight: 600;
+/* Скрытие 3D-хотспотов при открытых модальных окнах */
+.modal-open .hotspot-wrapper,
+.modal-open .album-card-btn {
+  display: none !important;
+  pointer-events: none !important;
 }
 
 /* Пульсирующий маркер 3D (Hotspot) */
@@ -171,13 +292,13 @@ body, html, #root {
 
 .hotspot-label {
   margin-top: 6px;
-  background: rgba(13, 15, 18, 0.88);
+  background: rgba(13, 15, 18, 0.9);
   color: #f8fafc;
   font-size: 0.72rem;
   font-weight: 500;
   padding: 0.25rem 0.55rem;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -189,7 +310,7 @@ body, html, #root {
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -201,9 +322,9 @@ body, html, #root {
 .modal-card {
   background: #181b20;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 580px;
+  max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.7);
@@ -212,14 +333,8 @@ body, html, #root {
 }
 
 @keyframes modal-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-header {
@@ -232,7 +347,7 @@ body, html, #root {
 }
 
 .modal-header h2 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: #f1f5f9;
 }
@@ -276,13 +391,13 @@ body, html, #root {
   font-style: italic;
 }
 
-/* Скрытая ссылка на источники (п. 5.3) */
+/* Кнопка на источники (п. 5.3) */
 .sources-btn {
   position: absolute;
   bottom: 1.25rem;
   right: 1.25rem;
   z-index: 10;
-  background: rgba(13, 15, 18, 0.85);
+  background: rgba(13, 15, 18, 0.88);
   color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0.55rem 0.95rem;
@@ -299,7 +414,164 @@ body, html, #root {
   background: rgba(26, 30, 36, 0.95);
 }
 
-@media (max-width: 640px) {
+/* Lightbox полноэкранного просмотра фотографий */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 10, 0.95);
+  backdrop-filter: blur(14px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.lightbox-container {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  animation: modal-enter 0.2s ease-out;
+}
+
+.lightbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-title-block h3 {
+  font-size: 1.25rem;
+  color: #f8fafc;
+  margin-bottom: 0.25rem;
+}
+
+.lightbox-meta {
+  display: flex;
+  gap: 1.2rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  align-items: center;
+}
+
+.lightbox-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lightbox-counter {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.lightbox-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.lightbox-nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.lightbox-nav-btn:hover {
+  background: #dc2626;
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.lightbox-image-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  max-height: 62vh;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.lightbox-caption {
+  margin-top: 0.85rem;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 800px;
+}
+
+.lightbox-thumbs {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.85rem 0 0.2rem;
+  margin-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-thumb-btn {
+  border: 2px solid transparent;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  overflow: hidden;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 64px;
+  height: 48px;
+}
+
+.lightbox-thumb-btn:hover {
+  opacity: 0.9;
+}
+
+.lightbox-thumb-btn.active {
+  border-color: #ef4444;
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.lightbox-thumb-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
   .header-overlay {
     top: 0.75rem;
     left: 0.75rem;
@@ -310,14 +582,14 @@ body, html, #root {
   .header-overlay h1 {
     font-size: 1.05rem;
   }
-  .header-overlay p {
-    font-size: 0.78rem;
-  }
-  .location-badge {
+  .museum-card {
     display: none;
   }
   .controls-hint {
     display: none;
+  }
+  .sub-selector-container {
+    bottom: 0.75rem;
   }
   .sources-btn {
     bottom: 0.75rem;

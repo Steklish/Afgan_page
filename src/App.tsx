@@ -1,70 +1,35 @@
-import React, { useState, useEffect, Suspense, Component, type ReactNode } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useGLTF, useTexture, Html, Preload, Center, Splat } from '@react-three/drei';
+import { OrbitControls, useTexture, Html, Preload } from '@react-three/drei';
 import * as THREE from 'three';
 import { 
-  BookOpen, 
-  Volume2, 
-  Film, 
-  MapPin, 
-  X, 
-  Mountain,
-  Landmark,
-  Box,
+  Award, 
+  Images, 
+  Camera, 
+  Mountain, 
+  Sparkles, 
+  Box, 
+  RotateCw, 
   Compass,
-  RotateCw,
-  Sparkles,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 
-type SectionKey = 'biography' | 'audio' | 'video' | 'memory' | 'sources';
-type SceneMode = 'model' | 'splat' | 'panorama360' | 'monument';
+import { SCENES, type SceneKey, getSceneByHash } from './config/scenes';
+import { MEDALS_DATA } from './config/medals';
+import { CAMERAS_DATA } from './config/cameras';
 
-interface HotspotProps {
-  position: [number, number, number];
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}
+import { MedalsScene } from './scenes/MedalsScene';
+import { AlbumScene } from './scenes/AlbumScene';
+import { CamerasScene } from './scenes/CamerasScene';
+import { Panorama360Scene } from './scenes/Panorama360Scene';
+import { GaussianSplatScene } from './scenes/GaussianSplatScene';
+import { CampfireScene } from './scenes/CampfireScene';
 
-// Компонент интерактивной 3D-метки с привязкой 2D-кнопки и всплывающего лейбла через Drei <Html>
-function Hotspot({ position, icon, label, onClick }: HotspotProps) {
-  const [hovered, setHovered] = useState(false);
+import { ContestModal, type SectionKey } from './components/ContestModal';
+import { LightboxModal, type AlbumPhoto } from './components/LightboxModal';
+import { SceneErrorBoundary } from './components/SceneErrorBoundary';
 
-  return (
-    <mesh position={position}>
-      <sphereGeometry args={[0.08, 16, 16]} />
-      <meshBasicMaterial transparent opacity={0} />
-      <Html distanceFactor={10} center>
-        <div 
-          className="hotspot-wrapper"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-        >
-          <button 
-            className="hotspot-pin" 
-            onClick={onClick} 
-            title={label}
-            aria-label={label}
-          >
-            {icon}
-          </button>
-          <div 
-            className="hotspot-label"
-            style={{ 
-              opacity: hovered ? 1 : 0.88,
-              transform: hovered ? 'scale(1.05)' : 'scale(1)'
-            }}
-          >
-            {label}
-          </div>
-        </div>
-      </Html>
-    </mesh>
-  );
-}
-
-// Установка 360° панорамного изображения в качестве фона и окружения сцены (Skybox)
+// Панорамный фон (Skybox)
 function PanoramaSkybox({ url }: { url: string }) {
   const texture = useTexture(url);
   const { scene } = useThree();
@@ -83,328 +48,213 @@ function PanoramaSkybox({ url }: { url: string }) {
   return null;
 }
 
-// Управление FOV зумом в режиме 360° панорамы (колесико мыши)
-function PanoramaZoomController() {
-  const { camera, gl } = useThree();
-
-  useEffect(() => {
-    const dom = gl.domElement;
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if ('fov' in camera && typeof camera.fov === 'number') {
-        const step = e.deltaY * 0.04;
-        camera.fov = Math.max(25, Math.min(80, camera.fov + step));
-        camera.updateProjectionMatrix();
-      }
-    };
-
-    dom.addEventListener('wheel', handleWheel, { passive: false });
-    return () => dom.removeEventListener('wheel', handleWheel);
-  }, [camera, gl]);
-
-  return null;
-}
-
-// Адаптер позиции камеры при смене режима сцены
-function CameraController({ mode }: { mode: SceneMode }) {
+// Контроллер камеры с плавной адаптацией под активную сцену
+function CameraRig({ sceneKey }: { sceneKey: SceneKey }) {
   const { camera } = useThree();
+  const sceneDef = SCENES.find((s) => s.key === sceneKey) || SCENES[0];
 
   useEffect(() => {
-    if (mode === 'panorama360') {
-      camera.position.set(0, 0, 0.01);
-      if ('fov' in camera && typeof camera.fov === 'number') {
-        camera.fov = 65;
-        camera.updateProjectionMatrix();
-      }
-    } else if (mode === 'model') {
-      camera.position.set(0, 0.5, 3.4);
-      if ('fov' in camera && typeof camera.fov === 'number') {
-        camera.fov = 45;
-        camera.updateProjectionMatrix();
-      }
-    } else if (mode === 'splat') {
-      camera.position.set(0, 3, 16);
-      if ('fov' in camera && typeof camera.fov === 'number') {
-        camera.fov = 50;
-        camera.updateProjectionMatrix();
-      }
-    } else {
-      camera.position.set(0, 1.4, 4.2);
-      if ('fov' in camera && typeof camera.fov === 'number') {
-        camera.fov = 45;
-        camera.updateProjectionMatrix();
-      }
+    camera.position.set(...sceneDef.cameraPosition);
+    if ('fov' in camera && typeof camera.fov === 'number') {
+      camera.fov = sceneDef.fov;
+      camera.updateProjectionMatrix();
     }
-  }, [mode, camera]);
+  }, [sceneKey, camera, sceneDef]);
 
   return null;
-}
-
-// 1. Демо-сцена 3D-Модели: «Полевой быт и память воина-интернационалиста»
-function ModelDemoScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  const { scene } = useGLTF('./models/wicker_basket_with_firewood.glb');
-
-  useEffect(() => {
-    scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-  }, [scene]);
-
-  return (
-    <group position={[0, 0.4, 0]}>
-      {/* Теплый свет костра/лампы, мягко подсвечивающий фактуру дерева */}
-      <pointLight position={[0, 0.3, 0.3]} intensity={1.8} color="#fb923c" distance={4} />
-
-      {/* 3D-модель с авто-центрированием Drei <Center> */}
-      <Center position={[0, 0, 0]}>
-        <primitive object={scene} scale={0.25} />
-      </Center>
-
-      {/* Интерактивные точки вокруг парящей 3D-модели */}
-      <Hotspot 
-        position={[0, 1.45, 0]} 
-        icon={<BookOpen size={18} />} 
-        label="Биография и боевой путь" 
-        onClick={() => onSelect('biography')} 
-      />
-
-      <Hotspot 
-        position={[-1.4, 0.05, 0.2]} 
-        icon={<Volume2 size={18} />} 
-        label="Песни у костра: аудиоархив" 
-        onClick={() => onSelect('audio')} 
-      />
-
-      <Hotspot 
-        position={[1.4, 0.05, 0.2]} 
-        icon={<Film size={18} />} 
-        label="Хроника событий: видео" 
-        onClick={() => onSelect('video')} 
-      />
-
-      <Hotspot 
-        position={[0, -1.3, 0.3]} 
-        icon={<MapPin size={18} />} 
-        label="Увековечение памяти земляка" 
-        onClick={() => onSelect('memory')} 
-      />
-    </group>
-  );
-}
-
-// 2. Сцена 3D Gaussian Splatting (объемный фотограмметрический скан)
-function GaussianSplatScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  return (
-    <group position={[0, 0, 0]}>
-      {/* 3D Gaussian Splatting через нативный шейдер Drei */}
-      <Splat 
-        src="./g_splats/output_501_01.splat" 
-        toneMapped={false}
-        alphaTest={0.02}
-      />
-
-      {/* Интерактивные точки, привязанные к объёмному скану */}
-      <Hotspot 
-        position={[0, 4, 0]} 
-        icon={<BookOpen size={18} />} 
-        label="Биография и боевой путь" 
-        onClick={() => onSelect('biography')} 
-      />
-
-      <Hotspot 
-        position={[-6, 1.5, 3]} 
-        icon={<Volume2 size={18} />} 
-        label="Голоса памяти: аудиоархив" 
-        onClick={() => onSelect('audio')} 
-      />
-
-      <Hotspot 
-        position={[6, 1.5, 3]} 
-        icon={<Film size={18} />} 
-        label="Хроника событий: видео" 
-        onClick={() => onSelect('video')} 
-      />
-
-      <Hotspot 
-        position={[0, -2, 7]} 
-        icon={<MapPin size={18} />} 
-        label="Увековечение памяти земляка" 
-        onClick={() => onSelect('memory')} 
-      />
-    </group>
-  );
-}
-
-// 3. Сцена 360° Иммерсивного тура (хотспоты расставлены по ключевым точкам горного ландшафта)
-function Panorama360Scene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  return (
-    <group>
-      <Hotspot 
-        position={[0, 1.3, -6.2]} 
-        icon={<BookOpen size={18} />} 
-        label="Биография и боевые заслуги" 
-        onClick={() => onSelect('biography')} 
-      />
-      <Hotspot 
-        position={[5.6, 0.6, -2.8]} 
-        icon={<Volume2 size={18} />} 
-        label="Голоса памяти: аудиоархив" 
-        onClick={() => onSelect('audio')} 
-      />
-      <Hotspot 
-        position={[2.4, -1.6, -5.2]} 
-        icon={<Film size={18} />} 
-        label="Хроника событий: видео" 
-        onClick={() => onSelect('video')} 
-      />
-      <Hotspot 
-        position={[-5.2, 0.4, -3.8]} 
-        icon={<MapPin size={18} />} 
-        label="Увековечение памяти земляка" 
-        onClick={() => onSelect('memory')} 
-      />
-    </group>
-  );
-}
-
-// 4. Сцена 3D-Обелиска (мемориальная стела на фоне горной панорамы)
-function MonumentScene({ onSelect }: { onSelect: (key: SectionKey) => void }) {
-  return (
-    <group position={[0, -0.6, 0]}>
-      {/* Нижнее гранитное основание */}
-      <mesh position={[0, 0.15, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2.2, 0.3, 2.2]} />
-        <meshStandardMaterial color="#1e242d" roughness={0.6} metalness={0.3} />
-      </mesh>
-
-      {/* Второй ярус постамента */}
-      <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
-        <boxGeometry args={[1.5, 0.25, 1.5]} />
-        <meshStandardMaterial color="#2c3440" roughness={0.5} metalness={0.2} />
-      </mesh>
-
-      {/* Мемориальная стела */}
-      <mesh position={[0, 1.6, 0]} rotation={[0, Math.PI / 4, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.3, 0.6, 2.2, 4]} />
-        <meshStandardMaterial color="#3b4252" roughness={0.3} metalness={0.4} />
-      </mesh>
-
-      {/* Символический мемориальный знак */}
-      <mesh position={[0, 1.6, 0.35]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.22, 0.22, 0.04, 32]} />
-        <meshStandardMaterial color="#b91c1c" roughness={0.3} metalness={0.6} />
-      </mesh>
-
-      {/* Латунная табличка */}
-      <mesh position={[0, 0.4, 0.76]} castShadow>
-        <boxGeometry args={[0.8, 0.18, 0.02]} />
-        <meshStandardMaterial color="#d97706" roughness={0.2} metalness={0.8} />
-      </mesh>
-
-      {/* Хотспоты стелы */}
-      <Hotspot position={[0, 2.4, 0.1]} icon={<BookOpen size={18} />} label="Биография" onClick={() => onSelect('biography')} />
-      <Hotspot position={[-1.1, 1.3, 0.2]} icon={<Volume2 size={18} />} label="Аудиоархив" onClick={() => onSelect('audio')} />
-      <Hotspot position={[1.1, 1.3, 0.2]} icon={<Film size={18} />} label="Видеохроника" onClick={() => onSelect('video')} />
-      <Hotspot position={[0, 0.4, 0.95]} icon={<MapPin size={18} />} label="Память" onClick={() => onSelect('memory')} />
-    </group>
-  );
-}
-
-// Error Boundary для безопасной подгрузки внешних ресурсов
-interface ErrorBoundaryProps {
-  fallback: ReactNode;
-  children: ReactNode;
-  resetKey?: unknown;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class SceneErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  override componentDidUpdate(prevProps: ErrorBoundaryProps) {
-    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
-      this.setState({ hasError: false });
-    }
-  }
-
-  override render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    return this.props.children;
-  }
 }
 
 export default function App() {
-  const [activeModal, setActiveModal] = useState<SectionKey | null>(null);
-  // Режимы: 3D-модель (по умолчанию), 3D Gaussian Splat, 360° панорама или 3D-обелиск
-  const [sceneMode, setSceneMode] = useState<SceneMode>('model');
+  // Навигация и синхронизация с URL Hash
+  const [currentSceneKey, setCurrentSceneKey] = useState<SceneKey>(() => {
+    const initial = getSceneByHash(window.location.hash);
+    return initial.key;
+  });
+
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
 
+  // Выбор конкретной медали и камеры
+  const [selectedMedalIndex, setSelectedMedalIndex] = useState<number>(0);
+  const [selectedCameraIndex, setSelectedCameraIndex] = useState<number>(0);
+
+  // Модальные окна конкурса
+  const [activeContestModal, setActiveContestModal] = useState<SectionKey | null>(null);
+
+  // Фотоальбом и Lightbox
+  const [photos, setPhotos] = useState<AlbumPhoto[]>([]);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+
+  // Загрузка метаданных альбома
+  useEffect(() => {
+    fetch('./album/album.json')
+      .then((res) => res.json())
+      .then((data) => setPhotos(data))
+      .catch((err) => console.error('Error loading album.json:', err));
+  }, []);
+
+  // Слушатель изменения хэша в URL браузера
+  useEffect(() => {
+    const handleHashChange = () => {
+      const scene = getSceneByHash(window.location.hash);
+      setCurrentSceneKey(scene.key);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleSelectScene = (key: SceneKey) => {
+    const scene = SCENES.find((s) => s.key === key);
+    if (scene) {
+      window.location.hash = `#/${scene.hash}`;
+      setCurrentSceneKey(key);
+    }
+  };
+
+  const currentSceneDef = SCENES.find((s) => s.key === currentSceneKey) || SCENES[0];
+  const activeMedal = MEDALS_DATA[selectedMedalIndex] || MEDALS_DATA[0];
+  const activeCamera = CAMERAS_DATA[selectedCameraIndex] || CAMERAS_DATA[0];
+
+  const isAnyModalOpen = activeContestModal !== null || isLightboxOpen;
+
   return (
-    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* Заголовок плаката и переключатель режимов */}
+    <div 
+      className={`app-root ${isAnyModalOpen ? 'modal-open' : ''}`} 
+      style={{ width: '100vw', height: '100vh', position: 'relative' }}
+    >
+      {/* 1. Верхняя навигационная панель виртуальной выставки */}
       <div className="header-overlay">
-        <h1>У каждого времени свои герои</h1>
-        <p>Интерактивный 3D-плакат памяти воина-интернационалиста</p>
+        <h1>Алексей Козлов: воин и фотолетописец</h1>
+        <p>Интерактивная 3D-выставка памяти пулеметчика 350-го полка ВДВ и ВИА «Голубые береты»</p>
 
         <div className="mode-switcher">
-          <button 
-            className={`mode-btn ${sceneMode === 'model' ? 'active' : ''}`}
-            onClick={() => setSceneMode('model')}
-            title="3D-модель полевого быта (дрова и костёр)"
-          >
-            <Box size={13} />
-            3D-Модель: Быт
-          </button>
-
-          <button 
-            className={`mode-btn ${sceneMode === 'splat' ? 'active' : ''}`}
-            onClick={() => setSceneMode('splat')}
-            title="3D Gaussian Splatting (объемный скан)"
-          >
-            <Sparkles size={13} />
-            3D Gaussian Splat
-          </button>
-
-          <button 
-            className={`mode-btn ${sceneMode === 'panorama360' ? 'active' : ''}`}
-            onClick={() => setSceneMode('panorama360')}
-            title="360° Панорамный осмотр перевала"
-          >
-            <Mountain size={13} />
-            360° Панорама
-          </button>
-
-          <button 
-            className={`mode-btn ${sceneMode === 'monument' ? 'active' : ''}`}
-            onClick={() => setSceneMode('monument')}
-            title="3D-Стела на фоне гор"
-          >
-            <Landmark size={13} />
-            3D-Обелиск
-          </button>
+          {SCENES.map((scene) => {
+            const isActive = scene.key === currentSceneKey;
+            return (
+              <button
+                key={scene.key}
+                className={`mode-btn ${isActive ? 'active' : ''}`}
+                onClick={() => handleSelectScene(scene.key)}
+                title={scene.description}
+              >
+                {scene.key === 'medals' && <Award size={14} />}
+                {scene.key === 'album' && <Images size={14} />}
+                {scene.key === 'cameras' && <Camera size={14} />}
+                {scene.key === 'panorama360' && <Mountain size={14} />}
+                {scene.key === 'splat' && <Sparkles size={14} />}
+                {scene.key === 'camp' && <Box size={14} />}
+                <span>{scene.shortTitle}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Индикатор локации и авто-вращения */}
+      {/* 2. Правая музейная карточка экспоната */}
+      {currentSceneKey === 'medals' && (
+        <div className="museum-card">
+          <h3>{activeMedal.title}</h3>
+          <div className="museum-card-subtitle">{activeMedal.subtitle} ({activeMedal.year} г.)</div>
+          <p>{activeMedal.citation}</p>
+          <div className="museum-card-note">
+            <span>3D-файл (GLB):</span>
+            <code>{activeMedal.modelFile}</code>
+          </div>
+        </div>
+      )}
+
+      {currentSceneKey === 'cameras' && (
+        <div className="museum-card">
+          <h3>{activeCamera.name}</h3>
+          <div className="museum-card-subtitle">{activeCamera.type}</div>
+          <p>{activeCamera.story}</p>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.76rem', color: '#94a3b8', lineHeight: '1.4' }}>
+            <div><strong>Объектив:</strong> {activeCamera.lens}</div>
+            <div><strong>Затвор:</strong> {activeCamera.shutter}</div>
+            <div><strong>Пленка:</strong> {activeCamera.filmType}</div>
+          </div>
+          <div className="museum-card-note">
+            <span>3D-файл (GLB):</span>
+            <code>{activeCamera.modelFile}</code>
+          </div>
+        </div>
+      )}
+
+      {currentSceneKey === 'album' && (
+        <div className="museum-card">
+          <h3>«Афганский репортаж»</h3>
+          <div className="museum-card-subtitle">Полный авторский архив 1984–1986 гг.</div>
+          <p>
+            Уникальная фотохроника войны, снятая на фотоаппараты ФЭД-2 и «Зенит».
+            Все снимки отреставрированы и переданы в музейные фонды.
+          </p>
+          <button 
+            style={{ 
+              marginTop: '0.8rem', 
+              width: '100%', 
+              background: '#dc2626', 
+              border: 'none', 
+              color: '#fff', 
+              padding: '0.5rem', 
+              borderRadius: '6px', 
+              cursor: 'pointer',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              fontSize: '0.82rem'
+            }}
+            onClick={() => {
+              setCurrentPhotoIndex(0);
+              setIsLightboxOpen(true);
+            }}
+          >
+            <Images size={16} />
+            Смотреть все 16 фото с описанием
+          </button>
+        </div>
+      )}
+
+      {/* 3. Нижняя панель переключения элементов в зале */}
+      {currentSceneKey === 'medals' && (
+        <div className="sub-selector-container">
+          <div className="sub-selector-bar">
+            {MEDALS_DATA.map((m, idx) => (
+              <button
+                key={m.id}
+                className={`sub-pill-btn ${idx === selectedMedalIndex ? 'active' : ''}`}
+                onClick={() => setSelectedMedalIndex(idx)}
+              >
+                {m.title.split(' ')[0]} {m.title.split(' ')[1] || ''}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {currentSceneKey === 'cameras' && (
+        <div className="sub-selector-container">
+          <div className="sub-selector-bar">
+            {CAMERAS_DATA.map((c, idx) => (
+              <button
+                key={c.id}
+                className={`sub-pill-btn ${idx === selectedCameraIndex ? 'active' : ''}`}
+                onClick={() => setSelectedCameraIndex(idx)}
+              >
+                {c.name.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Бейдж локации и кнопка авто-вращения */}
       <div className="location-badge">
         <Compass size={15} color="#ef4444" />
-        <span>360°</span> Перевал Гиндукуш
-        {(sceneMode === 'model' || sceneMode === 'splat') && (
+        <span>{currentSceneDef.badge}</span>
+        {currentSceneKey !== 'panorama360' && (
           <button 
             style={{ 
               background: autoRotate ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.1)', 
@@ -420,36 +270,37 @@ export default function App() {
               fontSize: '0.72rem'
             }}
             onClick={() => setAutoRotate(!autoRotate)}
-            title="Переключить авто-вращение сцены"
+            title="Переключить авто-вращение 3D-модели"
           >
             <RotateCw size={11} />
-            {autoRotate ? 'Вращение: Вкл' : 'Вращение: Пауза'}
+            {autoRotate ? 'Вращение: Вкл' : 'Пауза'}
           </button>
         )}
       </div>
 
-      {/* Подсказка управления */}
+      {/* 5. Инструкция по управлению */}
       <div className="controls-hint">
-        {sceneMode === 'panorama360' ? (
+        {currentSceneKey === 'panorama360' ? (
           'Вращение: Потяните курсор / Касание • Приближение: Колесо мыши'
-        ) : sceneMode === 'splat' ? (
+        ) : currentSceneKey === 'splat' ? (
           'Вращение: ЛКМ • Перемещение: ПКМ • Масштаб: Колесо мыши'
         ) : (
           'Вращение: Зажмите ЛКМ • Масштаб: Колесо мыши'
         )}
       </div>
 
-      {/* Кнопка скрытых источников (требование п. 5.3) */}
-      <button className="sources-btn" onClick={() => setActiveModal('sources')}>
-        Источники информации
+      {/* 6. Кнопка источников (требование положения конкурса) */}
+      <button className="sources-btn" onClick={() => setActiveContestModal('sources')}>
+        <FileText size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+        Источники и архивы
       </button>
 
-      {/* 3D Canvas */}
+      {/* 7. Главный 3D Canvas */}
       <Canvas 
-        camera={{ position: [0, 0.5, 3.4], fov: 45 }}
+        camera={{ position: [0, 0.5, 3], fov: 45 }}
         shadows
       >
-        <ambientLight intensity={0.9} />
+        <ambientLight intensity={0.85} />
         <directionalLight 
           position={[5, 10, 5]} 
           intensity={1.8} 
@@ -462,7 +313,7 @@ export default function App() {
           <Html center>
             <div style={{ 
               color: '#f8fafc', 
-              background: 'rgba(13, 15, 18, 0.9)', 
+              background: 'rgba(13, 15, 18, 0.92)', 
               padding: '0.85rem 1.4rem', 
               borderRadius: '8px', 
               border: '1px solid rgba(255,255,255,0.15)',
@@ -470,91 +321,75 @@ export default function App() {
               whiteSpace: 'nowrap',
               boxShadow: '0 8px 30px rgba(0,0,0,0.6)'
             }}>
-              Загрузка 3D-сцены...
+              Загрузка 3D-экспоната...
             </div>
           </Html>
         }>
-          {/* 360° панорама в качестве Skybox фона */}
+          {/* Панорама перевала в качестве фона */}
           <PanoramaSkybox url="./images/360_01.webp" />
-          <CameraController mode={sceneMode} />
+          <CameraRig sceneKey={currentSceneKey} />
 
-          {sceneMode === 'model' && (
-            <SceneErrorBoundary 
-              resetKey={sceneMode}
-              fallback={
-                <Html center>
-                  <div style={{ 
-                    color: '#f87171', 
-                    background: 'rgba(24, 10, 10, 0.92)', 
-                    padding: '1rem 1.25rem', 
-                    borderRadius: '8px', 
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    maxWidth: '320px',
-                    textAlign: 'center',
-                    fontSize: '0.85rem'
-                  }}>
-                    <AlertCircle size={24} style={{ margin: '0 auto 0.5rem', display: 'block', color: '#ef4444' }} />
-                    <strong>Файл модели не найден</strong>
-                    <p style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.78rem' }}>
-                      Поместите 3D-модель в <code>public/models/wicker_basket_with_firewood.glb</code>.
-                    </p>
-                  </div>
-                </Html>
-              }
-            >
-              <ModelDemoScene onSelect={setActiveModal} />
+          {/* Зал 1: Медали и награды */}
+          {currentSceneKey === 'medals' && (
+            <SceneErrorBoundary resetKey={selectedMedalIndex}>
+              <MedalsScene 
+                onSelectSection={setActiveContestModal}
+                selectedMedalIndex={selectedMedalIndex}
+              />
               <OrbitControls 
                 enablePan={false}
-                minDistance={1.6} 
-                maxDistance={6} 
-                maxPolarAngle={Math.PI - 0.05} 
-                target={[0, 0.4, 0]}
+                minDistance={1.4}
+                maxDistance={5.5}
+                target={[0, 0, 0]}
                 autoRotate={autoRotate}
                 autoRotateSpeed={1.0}
               />
             </SceneErrorBoundary>
           )}
 
-          {sceneMode === 'splat' && (
-            <SceneErrorBoundary 
-              resetKey={sceneMode}
-              fallback={
-                <Html center>
-                  <div style={{ 
-                    color: '#f87171', 
-                    background: 'rgba(24, 10, 10, 0.92)', 
-                    padding: '1rem 1.25rem', 
-                    borderRadius: '8px', 
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    maxWidth: '320px',
-                    textAlign: 'center',
-                    fontSize: '0.85rem'
-                  }}>
-                    <AlertCircle size={24} style={{ margin: '0 auto 0.5rem', display: 'block', color: '#ef4444' }} />
-                    <strong>Файл Gaussian Splat не найден</strong>
-                    <p style={{ marginTop: '0.35rem', color: '#cbd5e1', fontSize: '0.78rem' }}>
-                      Проверьте наличие файла в <code>public/g_splats/output_501_01.splat</code>.
-                    </p>
-                  </div>
-                </Html>
-              }
-            >
-              <GaussianSplatScene onSelect={setActiveModal} />
+          {/* Зал 2: Фотоальбом «Афганский репортаж» */}
+          {currentSceneKey === 'album' && (
+            <SceneErrorBoundary resetKey="album">
+              <AlbumScene 
+                onOpenLightbox={(idx) => {
+                  setCurrentPhotoIndex(idx);
+                  setIsLightboxOpen(true);
+                }}
+                onSelectSection={setActiveContestModal}
+              />
               <OrbitControls 
                 enablePan={true}
-                minDistance={1} 
-                maxDistance={120} 
-                target={[0, 0, 0]}
+                minDistance={1.8}
+                maxDistance={7}
+                target={[0, 0.2, 0]}
                 autoRotate={autoRotate}
                 autoRotateSpeed={0.5}
               />
             </SceneErrorBoundary>
           )}
 
-          {sceneMode === 'panorama360' && (
-            <>
-              <Panorama360Scene onSelect={setActiveModal} />
-              <PanoramaZoomController />
+          {/* Зал 3: Фотоаппаратура военкора */}
+          {currentSceneKey === 'cameras' && (
+            <SceneErrorBoundary resetKey={selectedCameraIndex}>
+              <CamerasScene 
+                onSelectSection={setActiveContestModal}
+                selectedCameraIndex={selectedCameraIndex}
+              />
+              <OrbitControls 
+                enablePan={false}
+                minDistance={1.4}
+                maxDistance={5.5}
+                target={[0, 0.1, 0]}
+                autoRotate={autoRotate}
+                autoRotateSpeed={1.0}
+              />
+            </SceneErrorBoundary>
+          )}
+
+          {/* Зал 4: 360° Панорама перевала */}
+          {currentSceneKey === 'panorama360' && (
+            <SceneErrorBoundary resetKey="pano">
+              <Panorama360Scene onSelectSection={setActiveContestModal} />
               <OrbitControls 
                 enablePan={false}
                 enableZoom={false}
@@ -563,147 +398,58 @@ export default function App() {
                 maxDistance={0.02}
                 target={[0, 0, 0]}
               />
-            </>
+            </SceneErrorBoundary>
           )}
 
-          {sceneMode === 'monument' && (
-            <>
-              <MonumentScene onSelect={setActiveModal} />
+          {/* Зал 5: 3D Gaussian Splatting */}
+          {currentSceneKey === 'splat' && (
+            <SceneErrorBoundary resetKey="splat">
+              <GaussianSplatScene onSelectSection={setActiveContestModal} />
+              <OrbitControls 
+                enablePan={true}
+                minDistance={1}
+                maxDistance={120}
+                target={[0, 0, 0]}
+                autoRotate={autoRotate}
+                autoRotateSpeed={0.5}
+              />
+            </SceneErrorBoundary>
+          )}
+
+          {/* Зал 6: Полевой быт (3D корзина с костровыми дровами) */}
+          {currentSceneKey === 'camp' && (
+            <SceneErrorBoundary resetKey="camp">
+              <CampfireScene onSelectSection={setActiveContestModal} />
               <OrbitControls 
                 enablePan={false}
-                minDistance={2} 
-                maxDistance={7} 
-                maxPolarAngle={Math.PI / 2 + 0.05} 
-                target={[0, 0.8, 0]}
+                minDistance={1.6}
+                maxDistance={6}
+                maxPolarAngle={Math.PI - 0.05}
+                target={[0, 0.4, 0]}
                 autoRotate={autoRotate}
-                autoRotateSpeed={0.8}
+                autoRotateSpeed={1.0}
               />
-            </>
+            </SceneErrorBoundary>
           )}
 
           <Preload all />
         </Suspense>
       </Canvas>
 
-      {/* Модальные окна с контентом конкурса */}
-      {activeModal && (
-        <div className="modal-backdrop" onClick={() => setActiveModal(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                {activeModal === 'biography' && 'Биографический портрет и боевой путь'}
-                {activeModal === 'audio' && 'Голоса эпохи: воспоминания и поэзия'}
-                {activeModal === 'video' && 'Документальная хроника и видеоинтервью'}
-                {activeModal === 'memory' && 'Увековечение памяти о земляке'}
-                {activeModal === 'sources' && 'Использованные источники и архивные фонды'}
-              </h2>
-              <button className="close-btn" onClick={() => setActiveModal(null)} aria-label="Закрыть">
-                <X size={20} />
-              </button>
-            </div>
+      {/* 8. Конкурсные модальные окна (биография, аудио, видео, память, источники) */}
+      <ContestModal 
+        activeModal={activeContestModal} 
+        onClose={() => setActiveContestModal(null)} 
+      />
 
-            <div className="modal-body">
-              {activeModal === 'biography' && (
-                <div>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                    <img 
-                      src="./images/hero_photo.jpg" 
-                      alt="Портрет воина-интернационалиста" 
-                      onError={(e) => {
-                        (e.currentTarget as HTMLElement).style.display = 'none';
-                      }}
-                      style={{ 
-                        width: '140px', 
-                        height: '180px', 
-                        objectFit: 'cover', 
-                        borderRadius: '6px',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.6)'
-                      }} 
-                    />
-                    <div style={{ flex: '1 1 240px' }}>
-                      <p>
-                        <strong>Годы службы и подвиг:</strong> Родился в нашем крае, окончил школу, 
-                        был призван в ряды Вооруженных Сил. Принимал участие в выполнении 
-                        интернационального долга в Демократической Республике Афганистан (1979–1989 гг.).
-                      </p>
-                      <p style={{ marginTop: '0.75rem' }}>
-                        Проходил службу на сложных участках горных перевалов Саланг и провинций Афганистана. 
-                        За проявленное мужество, стойкость и отвагу при выполнении боевых задач награждён 
-                        высокими государственными наградами.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="modal-note">
-                    Архивная фотография: <code>public/images/hero_photo.jpg</code>.
-                  </div>
-                </div>
-              )}
-
-              {activeModal === 'audio' && (
-                <div>
-                  <p>
-                    Аудиозапись воспоминаний сослуживцев, солдатских песен у костра и стихотворений 
-                    времён Афганской войны.
-                  </p>
-                  <audio className="modal-media" controls src="./audio/voice_archive.mp3">
-                    Ваш браузер не поддерживает элемент audio.
-                  </audio>
-                  <p className="modal-note">
-                    Подсказка: разместите аудиозапись в <code>public/audio/voice_archive.mp3</code>.
-                  </p>
-                </div>
-              )}
-
-              {activeModal === 'video' && (
-                <div>
-                  <p>
-                    Фрагменты интервью с участниками событий, кинохроника полевого быта застав 
-                    и документальные съёмки на перевале Саланг.
-                  </p>
-                  <video 
-                    className="modal-media" 
-                    controls 
-                    src="./video/documentary.mp4" 
-                    poster="./images/360_01.webp"
-                  >
-                    Ваш браузер не поддерживает элемент video.
-                  </video>
-                  <p className="modal-note">
-                    Подсказка: положите видео в <code>public/video/documentary.mp4</code> или вставьте YouTube embed <code>&lt;iframe&gt;</code>.
-                  </p>
-                </div>
-              )}
-
-              {activeModal === 'memory' && (
-                <div>
-                  <p>
-                    <strong>Память в граните и делах:</strong>
-                  </p>
-                  <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', lineHeight: '1.7' }}>
-                    <li>Мемориальная доска на здании школы;</li>
-                    <li>Экспозиция предметов солдатского быта и документов в районном музее;</li>
-                    <li>Ежегодные уроки мужества, вахты памяти и памятные турниры;</li>
-                    <li>Поисково-исследовательская работа учащихся и волонтёров.</li>
-                  </ul>
-                </div>
-              )}
-
-              {activeModal === 'sources' && (
-                <div>
-                  <p>Список документальных источников исследования (п. 5.3 условий конкурса):</p>
-                  <ul style={{ paddingLeft: '1.25rem', marginTop: '0.5rem', fontSize: '0.88rem', lineHeight: '1.7' }}>
-                    <li>Материалы фондов школьного историко-краеведческого музея;</li>
-                    <li>Семейный архив и письма воина-интернационалиста;</li>
-                    <li>Книга памяти воинов-интернационалистов Республики Беларусь;</li>
-                    <li>Материалы периодической печати и наградные документы военных комиссариатов.</li>
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 9. Полноэкранный просмотрщик фотографий альбома (Lightbox) */}
+      <LightboxModal 
+        photos={photos}
+        currentIndex={currentPhotoIndex}
+        isOpen={isLightboxOpen}
+        onClose={() => setIsLightboxOpen(false)}
+        onSelectIndex={setCurrentPhotoIndex}
+      />
     </div>
   );
 }
