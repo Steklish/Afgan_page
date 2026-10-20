@@ -1,11 +1,10 @@
-export type SceneKey = 'medals' | 'album' | 'cameras' | 'panorama360' | 'splat' | 'camp';
+export type SceneKey = 'tent' | 'medals' | 'album' | 'cameras' | 'panorama360' | 'camp';
 
 export interface SceneDefinition {
   key: SceneKey;
   hash: string;
   title: string;
   shortTitle: string;
-  iconName: string;
   badge: string;
   description: string;
   cameraPosition: [number, number, number];
@@ -15,76 +14,70 @@ export interface SceneDefinition {
 
 export const SCENES: SceneDefinition[] = [
   {
+    key: 'tent',
+    hash: 'tent',
+    title: 'Полевая палатка военкора',
+    shortTitle: 'Штабная палатка',
+    badge: 'Штаб 350-го гв. ПДП',
+    description: 'Интерактивная штабная палатка: выберите предмет на столе для перехода в зал',
+    cameraPosition: [0, 1.45, 3.2],
+    cameraTarget: [0, 0.85, 0.4],
+    fov: 46
+  },
+  {
     key: 'medals',
     hash: 'medals',
-    title: 'Награды и знаки отличия',
+    title: 'Награды и боевой путь',
     shortTitle: 'Награды',
-    iconName: 'Award',
-    badge: '3D Экспозиция',
-    description: 'Интерактивная 3D-витрина боевых медалей и знаков доблести А. Р. Козлова',
-    cameraPosition: [0, 0.4, 2.8],
+    badge: '3D Экспозиция наград',
+    description: 'Боевые медали и знаки воинской доблести гвардии рядового А. Р. Козлова',
+    cameraPosition: [0, 0.35, 2.4],
     cameraTarget: [0, 0, 0],
-    fov: 40
+    fov: 38
   },
   {
     key: 'album',
     hash: 'album',
     title: 'Альбом «Афганский репортаж»',
     shortTitle: 'Фотоальбом',
-    iconName: 'Images',
-    badge: '16 архивных фото',
-    description: 'Полный авторский фотоальбом военкора 350-го полка ВДВ (1984–1986 гг.)',
-    cameraPosition: [0, 0.6, 3.2],
-    cameraTarget: [0, 0.2, 0],
-    fov: 45
+    badge: '16 авторских фото',
+    description: 'Полный авторский фотоальбом военкора 4-й роты (1984–1986 гг.)',
+    cameraPosition: [0, 0.5, 3.2],
+    cameraTarget: [0, 0.15, 0],
+    fov: 44
   },
   {
     key: 'cameras',
     hash: 'cameras',
     title: 'Фотоаппаратура военкора',
     shortTitle: 'Фотокамеры',
-    iconName: 'Camera',
-    badge: '3D Арсенал',
-    description: 'ФЭД-2, «Зенит», «Смена-8М» — боевые камеры, запечатлевшие войну',
-    cameraPosition: [0, 0.5, 2.6],
-    cameraTarget: [0, 0.1, 0],
-    fov: 42
+    badge: 'ФЭД-2, Зенит, Смена-8М',
+    description: 'Боевая фототехника, прошедшая десантные рейды и высокогорные операции',
+    cameraPosition: [0, 0.35, 2.4],
+    cameraTarget: [0, 0, 0],
+    fov: 38
   },
   {
     key: 'panorama360',
     hash: 'pano',
     title: '360° Панорама перевала Саланг',
-    shortTitle: '360° Панорама',
-    iconName: 'Mountain',
-    badge: 'Гиндукуш',
-    description: 'Сферическая панорама горного ущелья и стратегической трассы Саланг',
+    shortTitle: '360° Саланг',
+    badge: 'Гиндукуш • Перевал',
+    description: 'Сферический круговой обзор стратегической трассы и горного перевала Саланг',
     cameraPosition: [0, 0, 0.01],
     cameraTarget: [0, 0, 0],
     fov: 65
   },
   {
-    key: 'splat',
-    hash: 'splat',
-    title: '3D Gaussian Splatting',
-    shortTitle: '3D Скан',
-    iconName: 'Sparkles',
-    badge: 'Объёмный скан',
-    description: 'Трёхмерный фотограмметрический скан местности (700 000 точек)',
-    cameraPosition: [0, 3, 16],
-    cameraTarget: [0, 0, 0],
-    fov: 50
-  },
-  {
     key: 'camp',
     hash: 'camp',
-    title: 'Полевой лагерь десантников',
-    shortTitle: 'Полевой быт',
-    iconName: 'Box',
-    badge: '3D Экспонат',
-    description: '3D-модель полевого быта заставы и костровых поленьев',
-    cameraPosition: [0, 0.5, 3.4],
-    cameraTarget: [0, 0.4, 0],
-    fov: 45
+    title: 'Солдатский быт и песни у костра',
+    shortTitle: 'Полевой костёр',
+    badge: 'Полевой лагерь',
+    description: 'Солдатский быт, песни под гитару и зарождение ВИА «Голубые береты»',
+    cameraPosition: [0, 0.45, 3.2],
+    cameraTarget: [0, 0.3, 0],
+    fov: 44
   }
 ];
 

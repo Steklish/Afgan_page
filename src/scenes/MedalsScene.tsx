@@ -8,6 +8,7 @@ import { BookOpen, Award } from 'lucide-react';
 interface MedalsSceneProps {
   onSelectSection: (key: SectionKey) => void;
   selectedMedalIndex: number;
+  hidden?: boolean;
 }
 
 // Процедурная 3D-модель медали (Mock-заглушка с аутентичной пятиугольной колодкой и диском/звездой)
@@ -130,7 +131,8 @@ function GlbMedalLoader({ medal, onError }: { medal: MedalItem; onError: () => v
 
 export function MedalsScene({
   onSelectSection,
-  selectedMedalIndex
+  selectedMedalIndex,
+  hidden = false
 }: MedalsSceneProps) {
   const medal = MEDALS_DATA[selectedMedalIndex] || MEDALS_DATA[0];
 
@@ -158,6 +160,7 @@ export function MedalsScene({
           label="Подвиг и основание награждения" 
           onClick={() => onSelectSection('biography')} 
           color="#d97706"
+          hidden={hidden}
         />
 
         {/* Интерактивный хотспот 2: Исторический формуляр */}
@@ -167,6 +170,7 @@ export function MedalsScene({
           label="Статус и лента награды" 
           onClick={() => onSelectSection('sources')} 
           color="#2563eb"
+          hidden={hidden}
         />
       </group>
     </group>

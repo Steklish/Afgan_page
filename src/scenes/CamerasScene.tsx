@@ -1,4 +1,4 @@
-import { useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { useGLTF, Center } from '@react-three/drei';
 import { CAMERAS_DATA, type CameraItem } from '../config/cameras';
 import { Hotspot } from '../components/Hotspot';
@@ -8,6 +8,29 @@ import { Eye, Film, Aperture } from 'lucide-react';
 interface CamerasSceneProps {
   onSelectSection: (key: SectionKey) => void;
   selectedCameraIndex: number;
+  hidden?: boolean;
+}
+
+class CameraErrorBoundary extends React.Component<
+  { fallback: React.ReactNode; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any) {
+    console.warn('GLB camera failed to load, falling back to procedural mock:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
 }
 
 // Процедурная 3D-модель винтажного советского фотоаппарата (Mock-заглушка)
@@ -97,36 +120,32 @@ function ProceduralCameraMock({ camera }: { camera: CameraItem }) {
 
 // Загрузка реального GLB файла камеры с переходом на процедурную модель
 function RealOrMockCamera({ camera }: { camera: CameraItem }) {
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  if (loadFailed) {
-    return <ProceduralCameraMock camera={camera} />;
-  }
-
   return (
-    <Suspense fallback={<ProceduralCameraMock camera={camera} />}>
-      <GlbCameraLoader camera={camera} onError={() => setLoadFailed(true)} />
-    </Suspense>
+    <CameraErrorBoundary key={camera.id} fallback={<ProceduralCameraMock camera={camera} />}>
+      <Suspense fallback={<ProceduralCameraMock camera={camera} />}>
+        <GlbCameraLoader camera={camera} />
+      </Suspense>
+    </CameraErrorBoundary>
   );
 }
 
-function GlbCameraLoader({ camera, onError }: { camera: CameraItem; onError: () => void }) {
-  try {
-    const { scene } = useGLTF(camera.modelFile);
-    return (
-      <Center position={[0, 0, 0]}>
-        <primitive object={scene} scale={1} />
-      </Center>
-    );
-  } catch (e) {
-    onError();
-    return <ProceduralCameraMock camera={camera} />;
-  }
+function GlbCameraLoader({ camera }: { camera: CameraItem }) {
+  const { scene } = useGLTF(camera.modelFile);
+  return (
+    <Center position={[0, 0, 0]}>
+      <primitive 
+        object={scene} 
+        scale={16} 
+        rotation={[0, Math.PI / 2, 0]} 
+      />
+    </Center>
+  );
 }
 
 export function CamerasScene({
   onSelectSection,
-  selectedCameraIndex
+  selectedCameraIndex,
+  hidden = false
 }: CamerasSceneProps) {
   const camera = CAMERAS_DATA[selectedCameraIndex] || CAMERAS_DATA[0];
 
@@ -154,6 +173,7 @@ export function CamerasScene({
           label={`Оптика: ${camera.lens}`} 
           onClick={() => onSelectSection('sources')} 
           color="#38bdf8"
+          hidden={hidden}
         />
 
         {/* Интерактивный хотспот: Дальномер и видоискатель */}
@@ -163,6 +183,7 @@ export function CamerasScene({
           label="Видоискатель и съемка навскидку" 
           onClick={() => onSelectSection('biography')} 
           color="#f59e0b"
+          hidden={hidden}
         />
 
         {/* Интерактивный хотспот: Пленка и архивы */}
@@ -172,6 +193,7 @@ export function CamerasScene({
           label="Пленка и полевая фотолаборатория" 
           onClick={() => onSelectSection('memory')} 
           color="#10b981"
+          hidden={hidden}
         />
       </group>
     </group>

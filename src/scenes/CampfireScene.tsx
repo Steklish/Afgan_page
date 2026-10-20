@@ -7,9 +7,10 @@ import { BookOpen, Volume2, Film, MapPin } from 'lucide-react';
 
 interface CampfireSceneProps {
   onSelectSection: (key: SectionKey) => void;
+  hidden?: boolean;
 }
 
-export function CampfireScene({ onSelectSection }: CampfireSceneProps) {
+export function CampfireScene({ onSelectSection, hidden = false }: CampfireSceneProps) {
   const { scene } = useGLTF('./models/wicker_basket_with_firewood.glb');
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function CampfireScene({ onSelectSection }: CampfireSceneProps) {
         icon={<BookOpen size={18} />} 
         label="Биография и боевой путь" 
         onClick={() => onSelectSection('biography')} 
+        hidden={hidden}
       />
 
       <Hotspot 
@@ -44,6 +46,7 @@ export function CampfireScene({ onSelectSection }: CampfireSceneProps) {
         icon={<Volume2 size={18} />} 
         label="Песни у костра: аудиоархив" 
         onClick={() => onSelectSection('audio')} 
+        hidden={hidden}
       />
 
       <Hotspot 
@@ -51,6 +54,7 @@ export function CampfireScene({ onSelectSection }: CampfireSceneProps) {
         icon={<Film size={18} />} 
         label="Хроника событий: видео" 
         onClick={() => onSelectSection('video')} 
+        hidden={hidden}
       />
 
       <Hotspot 
@@ -58,6 +62,7 @@ export function CampfireScene({ onSelectSection }: CampfireSceneProps) {
         icon={<MapPin size={18} />} 
         label="Увековечение памяти земляка" 
         onClick={() => onSelectSection('memory')} 
+        hidden={hidden}
       />
     </group>
   );

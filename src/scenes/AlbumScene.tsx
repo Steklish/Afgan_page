@@ -8,6 +8,7 @@ import { Images, Maximize2, MapPin } from 'lucide-react';
 interface AlbumSceneProps {
   onOpenLightbox: (index: number) => void;
   onSelectSection: (key: SectionKey) => void;
+  hidden?: boolean;
 }
 
 // 3D Карточка фотографии на виртуальной витрине
@@ -16,13 +17,15 @@ function PhotoCard3D({
   position,
   rotation,
   index,
-  onClick
+  onClick,
+  hidden = false
 }: {
   photo: AlbumPhoto;
   position: [number, number, number];
   rotation: [number, number, number];
   index: number;
   onClick: () => void;
+  hidden?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const texture = useTexture(photo.src);
@@ -46,22 +49,24 @@ function PhotoCard3D({
         <meshBasicMaterial map={texture} />
       </mesh>
 
-      {/* Всплывающая кнопка увеличения */}
-      <Html distanceFactor={8} position={[0, -0.72, 0.05]} center>
-        <button
-          className="album-card-btn"
-          onClick={onClick}
-          title="Нажмите для открытия снимка в высоком разрешении"
-        >
-          <Maximize2 size={13} />
-          <span>№ {index + 1}: {photo.title.slice(0, 24)}...</span>
-        </button>
-      </Html>
+      {/* Всплывающая кнопка увеличения (скрыта при модальных окнах) */}
+      {!hidden && (
+        <Html distanceFactor={8} position={[0, -0.72, 0.05]} center zIndexRange={[1, 5]}>
+          <button
+            className="album-card-btn"
+            onClick={onClick}
+            title="Нажмите для открытия снимка в высоком разрешении"
+          >
+            <Maximize2 size={13} />
+            <span>№ {index + 1}: {photo.title.slice(0, 24)}...</span>
+          </button>
+        </Html>
+      )}
     </group>
   );
 }
 
-export function AlbumScene({ onOpenLightbox, onSelectSection }: AlbumSceneProps) {
+export function AlbumScene({ onOpenLightbox, onSelectSection, hidden = false }: AlbumSceneProps) {
   const [photos, setPhotos] = useState<AlbumPhoto[]>([]);
 
   useEffect(() => {
@@ -94,6 +99,7 @@ export function AlbumScene({ onOpenLightbox, onSelectSection }: AlbumSceneProps)
             rotation={[0, rotY, 0]}
             index={idx}
             onClick={() => onOpenLightbox(idx)}
+            hidden={hidden}
           />
         );
       })}
@@ -105,6 +111,7 @@ export function AlbumScene({ onOpenLightbox, onSelectSection }: AlbumSceneProps)
         label="Открыть полный альбом (все 16 снимков)" 
         onClick={() => onOpenLightbox(0)} 
         color="#dc2626"
+        hidden={hidden}
       />
 
       {/* Хотспот на хронологию выставок */}
@@ -114,6 +121,7 @@ export function AlbumScene({ onOpenLightbox, onSelectSection }: AlbumSceneProps)
         label="Музейные экспозиции «Афганского репортажа»" 
         onClick={() => onSelectSection('memory')} 
         color="#2563eb"
+        hidden={hidden}
       />
     </group>
   );

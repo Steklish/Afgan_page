@@ -6,6 +6,7 @@ import { BookOpen, Volume2, Film, MapPin } from 'lucide-react';
 
 interface Panorama360SceneProps {
   onSelectSection: (key: SectionKey) => void;
+  hidden?: boolean;
 }
 
 // Управление FOV зумом в режиме 360° панорамы (колесико мыши)
@@ -30,7 +31,7 @@ export function PanoramaZoomController() {
   return null;
 }
 
-export function Panorama360Scene({ onSelectSection }: Panorama360SceneProps) {
+export function Panorama360Scene({ onSelectSection, hidden = false }: Panorama360SceneProps) {
   return (
     <group>
       <PanoramaZoomController />
@@ -39,24 +40,28 @@ export function Panorama360Scene({ onSelectSection }: Panorama360SceneProps) {
         icon={<BookOpen size={18} />} 
         label="Биография и боевые заслуги" 
         onClick={() => onSelectSection('biography')} 
+        hidden={hidden}
       />
       <Hotspot 
         position={[5.6, 0.6, -2.8]} 
         icon={<Volume2 size={18} />} 
         label="Голоса памяти: аудиоархив" 
         onClick={() => onSelectSection('audio')} 
+        hidden={hidden}
       />
       <Hotspot 
         position={[2.4, -1.6, -5.2]} 
         icon={<Film size={18} />} 
         label="Хроника событий: видео" 
         onClick={() => onSelectSection('video')} 
+        hidden={hidden}
       />
       <Hotspot 
         position={[-5.2, 0.4, -3.8]} 
         icon={<MapPin size={18} />} 
         label="Увековечение памяти земляка" 
         onClick={() => onSelectSection('memory')} 
+        hidden={hidden}
       />
     </group>
   );
