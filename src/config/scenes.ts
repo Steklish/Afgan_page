@@ -1,4 +1,4 @@
-export type SceneKey = 'tent' | 'medals' | 'album' | 'cameras' | 'panorama360' | 'camp';
+export type SceneKey = 'tent' | 'medals' | 'album' | 'cameras' | 'panorama360';
 
 export interface SceneDefinition {
   key: SceneKey;
@@ -67,17 +67,6 @@ export const SCENES: SceneDefinition[] = [
     cameraPosition: [0, 0, 0.01],
     cameraTarget: [0, 0, 0],
     fov: 65
-  },
-  {
-    key: 'camp',
-    hash: 'camp',
-    title: 'Солдатский быт и песни у костра',
-    shortTitle: 'Полевой костёр',
-    badge: 'Полевой лагерь',
-    description: 'Солдатский быт, песни под гитару и зарождение ВИА «Голубые береты»',
-    cameraPosition: [0, 0.45, 3.2],
-    cameraTarget: [0, 0.3, 0],
-    fov: 44
   }
 ];
 

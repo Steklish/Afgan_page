@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useThree } from '@react-three/fiber';
 import { Hotspot } from '../components/Hotspot';
 import type { SectionKey } from '../components/ContestModal';
-import { BookOpen, Volume2, Film, MapPin } from 'lucide-react';
+import { BookOpen, Volume2, MapPin } from 'lucide-react';
 
 interface Panorama360SceneProps {
   onSelectSection: (key: SectionKey) => void;
@@ -47,13 +47,6 @@ export function Panorama360Scene({ onSelectSection, hidden = false }: Panorama36
         icon={<Volume2 size={18} />} 
         label="Голоса памяти: аудиоархив" 
         onClick={() => onSelectSection('audio')} 
-        hidden={hidden}
-      />
-      <Hotspot 
-        position={[2.4, -1.6, -5.2]} 
-        icon={<Film size={18} />} 
-        label="Хроника событий: видео" 
-        onClick={() => onSelectSection('video')} 
         hidden={hidden}
       />
       <Hotspot 

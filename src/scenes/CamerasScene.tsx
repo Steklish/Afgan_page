@@ -118,8 +118,13 @@ function ProceduralCameraMock({ camera }: { camera: CameraItem }) {
   );
 }
 
-// Загрузка реального GLB файла камеры с переходом на процедурную модель
+// Загрузка 3D-модели фотоаппарата (в детальном виде используется исторически точная процедурная модель советского аппарата ФЭД-2/Зенит)
 function RealOrMockCamera({ camera }: { camera: CameraItem }) {
+  // Исключаем generic_camera.glb из детального режима просмотра
+  if (!camera.modelFile || camera.modelFile.includes('generic_camera')) {
+    return <ProceduralCameraMock camera={camera} />;
+  }
+
   return (
     <CameraErrorBoundary key={camera.id} fallback={<ProceduralCameraMock camera={camera} />}>
       <Suspense fallback={<ProceduralCameraMock camera={camera} />}>

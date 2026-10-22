@@ -31,7 +31,7 @@ npm run preview
 - `public/models/scene.glb` — Ваша оптимизированная 3D-модель (до 15–20 МБ, текстуры до 2K, рекомендуется сжатие через [gltf.report](https://gltf.report/)).
 - `public/audio/voice_archive.mp3` — Аудиозапись воспоминаний, интервью или стихов.
 - `public/video/documentary.mp4` — Видеоролик кинохроники (или YouTube embed в `src/App.tsx`).
-- `public/images/hero_photo.jpg` — Архивный портрет героя.
+- `public/images/hero_photo.png` — Архивный портрет героя.
 - `public/images/poster_preview.png` — Статичный скриншот постера для отчёта жюри и превью.
 
 > **💡 Подсказка:** Пока реальный файл `scene.glb` не добавлен, в приложении работает интерактивная мемориальная 3D-стела с 4 хотспотами. Переключаться между демо-стелой и моделью `scene.glb` можно в один клик по кнопке в левом верхнем углу интерфейса.

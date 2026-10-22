@@ -2,9 +2,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, useTexture, Html, Preload } from '@react-three/drei';
 import * as THREE from 'three';
-import { 
+import {
   ArrowLeft,
-  RotateCw, 
+  RotateCw,
   Compass,
   FileText,
   Images
@@ -19,10 +19,10 @@ import { MedalsScene } from './scenes/MedalsScene';
 import { AlbumScene } from './scenes/AlbumScene';
 import { CamerasScene } from './scenes/CamerasScene';
 import { Panorama360Scene } from './scenes/Panorama360Scene';
-import { CampfireScene } from './scenes/CampfireScene';
 
 import { ContestModal, type SectionKey } from './components/ContestModal';
 import { LightboxModal, type AlbumPhoto } from './components/LightboxModal';
+import { MagazineModal } from './components/MagazineModal';
 import { SceneErrorBoundary } from './components/SceneErrorBoundary';
 
 // Панорамный фон (Skybox)
@@ -44,6 +44,9 @@ function PanoramaSkybox({ url }: { url: string }) {
   return null;
 }
 
+useTexture.preload('./images/360_night.png');
+useTexture.preload('./images/360_01.webp');
+
 // Контроллер камеры с плавной адаптацией под активную сцену
 function CameraRig({ sceneKey }: { sceneKey: SceneKey }) {
   const { camera } = useThree();
@@ -59,6 +62,9 @@ function CameraRig({ sceneKey }: { sceneKey: SceneKey }) {
 
   return null;
 }
+
+useTexture.preload('./images/360_night.png');
+useTexture.preload('./images/360_01.webp');
 
 export default function App() {
   // Навигация и синхронизация с URL Hash
@@ -80,6 +86,10 @@ export default function App() {
   const [photos, setPhotos] = useState<AlbumPhoto[]>([]);
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+
+  // Периодика и статьи (журналы и газеты)
+  const [isMagazineModalOpen, setIsMagazineModalOpen] = useState<boolean>(false);
+  const [currentMagazineIndex, setCurrentMagazineIndex] = useState<number>(0);
 
   // Загрузка метаданных альбома
   useEffect(() => {
@@ -112,27 +122,33 @@ export default function App() {
   const activeMedal = MEDALS_DATA[selectedMedalIndex] || MEDALS_DATA[0];
   const activeCamera = CAMERAS_DATA[selectedCameraIndex] || CAMERAS_DATA[0];
 
-  const isAnyModalOpen = activeContestModal !== null || isLightboxOpen;
+  const isAnyModalOpen = activeContestModal !== null || isLightboxOpen || isMagazineModalOpen;
+  const isNightTent = currentSceneKey === 'tent';
+  const skyboxUrl = isNightTent ? './images/360_night.png' : './images/360_01.webp';
 
   return (
-    <div 
-      className={`app-root ${isAnyModalOpen ? 'modal-open' : ''}`} 
+    <div
+      className={`app-root ${isAnyModalOpen ? 'modal-open' : ''}`}
       style={{ width: '100vw', height: '100vh', position: 'relative' }}
     >
       {/* 1. Верхняя навигационная панель выставки */}
-      <div className="header-overlay">
+      <div className={`header-overlay ${currentSceneKey === 'tent' ? 'tent-header-overlay' : ''}`}>
         {currentSceneKey === 'tent' ? (
-          <>
-            <div className="header-badge">★ 350-й гв. ПДП • Полевой штаб</div>
-            <h1>Алексей Козлов: воин и фотолетописец</h1>
+          <div className="tent-header-inner">
+            <div className="header-badge">
+              {/* <span className="badge-unit">350-й гв. ПДП • Полевой штаб</span> */}
+              {/* <span className="header-fold-icon" aria-hidden="true">▾</span> */}
+            </div>
+            <h1>Алексей Рэмович Козлов</h1>
             <p className="header-desc">
+            <h2>воин и фотолетописец</h2>
               Интерактивная 3D-палатка военкора. Осмотрите предметы на столе и у входа, чтобы перейти в выставочные залы.
             </p>
-          </>
+          </div>
         ) : (
           <div className="subscene-header-nav">
-            <button 
-              className="back-to-tent-btn" 
+            <button
+              className="back-to-tent-btn"
               onClick={() => handleSelectScene('tent')}
               title="Вернуться в штабную палатку"
             >
@@ -173,8 +189,8 @@ export default function App() {
             <div><strong>Пленка:</strong> {activeCamera.filmType}</div>
           </div>
           <div className="museum-card-note">
-            <span>3D-файл (GLB):</span>
-            <code>{activeCamera.modelFile}</code>
+            <span>3D-модель:</span>
+            <code>{activeCamera.modelFile ? activeCamera.modelFile : 'Историческая 3D-реконструкция'}</code>
           </div>
         </div>
       )}
@@ -188,7 +204,7 @@ export default function App() {
             Уникальная фотохроника войны, снятая на фотоаппараты ФЭД-2 и «Зенит».
             Все снимки отреставрированы и переданы в музейные фонды.
           </p>
-          <button 
+          <button
             className="album-open-all-btn"
             onClick={() => {
               setCurrentPhotoIndex(0);
@@ -236,16 +252,16 @@ export default function App() {
 
       {/* 4. Бейдж локации и кнопка авто-вращения */}
       <div className="location-badge">
-        <Compass size={15} color="#dc2626" />
-        <span>{currentSceneDef.badge}</span>
+        <Compass size={17} className="location-badge-icon" />
+        <span className="location-badge-title">{currentSceneDef.badge}</span>
         {currentSceneKey !== 'panorama360' && (
-          <button 
+          <button
             className="autorotate-toggle-btn"
             onClick={() => setAutoRotate(!autoRotate)}
             title="Переключить авто-вращение 3D-модели"
           >
-            <RotateCw size={11} />
-            {autoRotate ? 'Вращение: Вкл' : 'Пауза'}
+            <RotateCw size={11} className={autoRotate ? 'spin-slow' : ''} />
+            <span>{autoRotate ? 'Вращение: Вкл' : 'Пауза'}</span>
           </button>
         )}
       </div>
@@ -255,31 +271,45 @@ export default function App() {
         {currentSceneKey === 'panorama360' ? (
           'Вращение: Потяните курсор / Касание • Приближение: Колесо мыши'
         ) : currentSceneKey === 'tent' ? (
-          'Осмотр палатки: Зажмите ЛКМ • Масштаб: Колесо мыши • Кликните по предмету для перехода'
+          'ЛКМ, Колесо мыши - вращение и масштаб'
         ) : (
           'Вращение: Зажмите ЛКМ • Масштаб: Колесо мыши'
         )}
       </div>
 
       {/* 6. Кнопка источников (требование положения конкурса) */}
-      <button className="sources-btn" onClick={() => setActiveContestModal('sources')}>
-        <FileText size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-        Источники и архивы
+      <button 
+        className="sources-btn" 
+        onClick={() => setActiveContestModal('sources')}
+        title="Источники и архивные фонды (кликните для просмотра)"
+        aria-label="Источники и архивы"
+      >
+        <FileText size={15} className="sources-btn-icon" />
+        <span className="sources-btn-label">Источники и архивы</span>
       </button>
 
       {/* 7. Главный 3D Canvas */}
-      <Canvas 
+      <Canvas
         camera={{ position: [0, 1.2, 2.5], fov: 48 }}
         shadows
       >
-        <ambientLight intensity={0.7} />
-        <directionalLight 
-          position={[5, 10, 5]} 
-          intensity={1.6} 
-          castShadow 
+        {/* Адаптивное глобальное освещение: приглушённое ночное для палатки, чтобы ярко выделялись лампы */}
+        <ambientLight
+          intensity={isNightTent ? 0.22 : 0.7}
+          color={isNightTent ? '#cbd5e1' : '#ffffff'}
+        />
+        <directionalLight
+          position={isNightTent ? [3, 8, 3] : [5, 10, 5]}
+          intensity={isNightTent ? 0.42 : 1.6}
+          color={isNightTent ? '#93c5fd' : '#ffffff'}
+          castShadow
           shadow-mapSize={[1024, 1024]}
         />
-        <pointLight position={[-4, 3, -2]} intensity={0.4} color="#93c5fd" />
+        <pointLight
+          position={[-4, 3, -2]}
+          intensity={isNightTent ? 0.12 : 0.4}
+          color="#60a5fa"
+        />
 
         <Suspense fallback={
           <Html center>
@@ -288,23 +318,27 @@ export default function App() {
             </div>
           </Html>
         }>
-          {/* Панорама перевала Саланг в качестве фона */}
-          <PanoramaSkybox url="./images/360_01.webp" />
+          {/* Панорама перевала: ночная 360_night.png для палатки, дневная для остальных сцен */}
+          <PanoramaSkybox url={skyboxUrl} />
           <CameraRig sceneKey={currentSceneKey} />
 
           {/* Зал 0: Полевая палатка военкора (Центральный интерактивный штаб) */}
           {currentSceneKey === 'tent' && (
             <SceneErrorBoundary resetKey="tent">
-              <TentScene 
+              <TentScene
                 onNavigate={handleSelectScene}
                 onSelectSection={setActiveContestModal}
                 onOpenAlbum={() => {
                   setCurrentPhotoIndex(0);
                   setIsLightboxOpen(true);
                 }}
+                onOpenMagazine={(index) => {
+                  setCurrentMagazineIndex(index);
+                  setIsMagazineModalOpen(true);
+                }}
                 hidden={isAnyModalOpen}
               />
-              <OrbitControls 
+              <OrbitControls
                 enablePan={false}
                 minDistance={1.4}
                 maxDistance={4.5}
@@ -320,12 +354,12 @@ export default function App() {
           {/* Зал 1: Медали и награды */}
           {currentSceneKey === 'medals' && (
             <SceneErrorBoundary resetKey={selectedMedalIndex}>
-              <MedalsScene 
+              <MedalsScene
                 onSelectSection={setActiveContestModal}
                 selectedMedalIndex={selectedMedalIndex}
                 hidden={isAnyModalOpen}
               />
-              <OrbitControls 
+              <OrbitControls
                 enablePan={false}
                 minDistance={1.4}
                 maxDistance={5.5}
@@ -339,7 +373,7 @@ export default function App() {
           {/* Зал 2: Фотоальбом «Афганский репортаж» */}
           {currentSceneKey === 'album' && (
             <SceneErrorBoundary resetKey="album">
-              <AlbumScene 
+              <AlbumScene
                 onOpenLightbox={(idx) => {
                   setCurrentPhotoIndex(idx);
                   setIsLightboxOpen(true);
@@ -347,7 +381,7 @@ export default function App() {
                 onSelectSection={setActiveContestModal}
                 hidden={isAnyModalOpen}
               />
-              <OrbitControls 
+              <OrbitControls
                 enablePan={true}
                 minDistance={1.8}
                 maxDistance={7}
@@ -361,12 +395,12 @@ export default function App() {
           {/* Зал 3: Фотоаппаратура военкора */}
           {currentSceneKey === 'cameras' && (
             <SceneErrorBoundary resetKey={selectedCameraIndex}>
-              <CamerasScene 
+              <CamerasScene
                 onSelectSection={setActiveContestModal}
                 selectedCameraIndex={selectedCameraIndex}
                 hidden={isAnyModalOpen}
               />
-              <OrbitControls 
+              <OrbitControls
                 enablePan={false}
                 minDistance={1.4}
                 maxDistance={5.5}
@@ -380,11 +414,11 @@ export default function App() {
           {/* Зал 4: 360° Панорама перевала */}
           {currentSceneKey === 'panorama360' && (
             <SceneErrorBoundary resetKey="pano">
-              <Panorama360Scene 
-                onSelectSection={setActiveContestModal} 
+              <Panorama360Scene
+                onSelectSection={setActiveContestModal}
                 hidden={isAnyModalOpen}
               />
-              <OrbitControls 
+              <OrbitControls
                 enablePan={false}
                 enableZoom={false}
                 rotateSpeed={-0.6}
@@ -395,42 +429,31 @@ export default function App() {
             </SceneErrorBoundary>
           )}
 
-          {/* Зал 5: Полевой быт (3D корзина с костровыми дровами) */}
-          {currentSceneKey === 'camp' && (
-            <SceneErrorBoundary resetKey="camp">
-              <CampfireScene 
-                onSelectSection={setActiveContestModal} 
-                hidden={isAnyModalOpen}
-              />
-              <OrbitControls 
-                enablePan={false}
-                minDistance={1.6}
-                maxDistance={6}
-                maxPolarAngle={Math.PI - 0.05}
-                target={[0, 0.4, 0]}
-                autoRotate={autoRotate}
-                autoRotateSpeed={1.0}
-              />
-            </SceneErrorBoundary>
-          )}
-
           <Preload all />
         </Suspense>
       </Canvas>
 
       {/* 8. Конкурсные модальные окна (биография, аудио, видео, память, источники) */}
-      <ContestModal 
-        activeModal={activeContestModal} 
-        onClose={() => setActiveContestModal(null)} 
+      <ContestModal
+        activeModal={activeContestModal}
+        onClose={() => setActiveContestModal(null)}
       />
 
       {/* 9. Полноэкранный просмотрщик фотографий альбома (Lightbox) */}
-      <LightboxModal 
+      <LightboxModal
         photos={photos}
         currentIndex={currentPhotoIndex}
         isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
         onSelectIndex={setCurrentPhotoIndex}
+      />
+
+      {/* 10. Полноэкранный просмотрщик периодики и статей (журналы и газеты) */}
+      <MagazineModal
+        isOpen={isMagazineModalOpen}
+        currentIndex={currentMagazineIndex}
+        onClose={() => setIsMagazineModalOpen(false)}
+        onSelectIndex={setCurrentMagazineIndex}
       />
     </div>
   );

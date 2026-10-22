@@ -1,6 +1,6 @@
-import { X, BookOpen, Volume2, Film, MapPin, FileText } from 'lucide-react';
+import { X, BookOpen, Volume2, MapPin, FileText } from 'lucide-react';
 
-export type SectionKey = 'biography' | 'audio' | 'video' | 'memory' | 'sources';
+export type SectionKey = 'biography' | 'audio' | 'memory' | 'sources';
 
 interface ContestModalProps {
   activeModal: SectionKey | null;
@@ -17,13 +17,11 @@ export function ContestModal({ activeModal, onClose }: ContestModalProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             {activeModal === 'biography' && <BookOpen size={20} color="#ef4444" />}
             {activeModal === 'audio' && <Volume2 size={20} color="#ef4444" />}
-            {activeModal === 'video' && <Film size={20} color="#ef4444" />}
             {activeModal === 'memory' && <MapPin size={20} color="#ef4444" />}
             {activeModal === 'sources' && <FileText size={20} color="#ef4444" />}
             <h2>
               {activeModal === 'biography' && 'Биографический портрет и боевой путь'}
               {activeModal === 'audio' && 'Голоса эпохи: воспоминания и поэзия'}
-              {activeModal === 'video' && 'Документальная хроника и видеоинтервью'}
               {activeModal === 'memory' && 'Увековечение памяти о земляке'}
               {activeModal === 'sources' && 'Использованные источники и архивные фонды'}
             </h2>
@@ -37,41 +35,41 @@ export function ContestModal({ activeModal, onClose }: ContestModalProps) {
           {activeModal === 'biography' && (
             <div>
               <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                <img 
-                  src="./images/hero_photo.jpg" 
-                  alt="Алексей Рэмович Козлов" 
+                <img
+                  src="./images/hero_photo.png"
+                  alt="Алексей Рэмович Козлов"
                   onError={(e) => {
                     (e.currentTarget as HTMLElement).style.display = 'none';
                   }}
-                  style={{ 
-                    width: '150px', 
-                    height: '200px', 
-                    objectFit: 'cover', 
+                  style={{
+                    width: '150px',
+                    height: '200px',
+                    objectFit: 'cover',
                     borderRadius: '8px',
                     border: '1px solid rgba(255,255,255,0.2)',
                     boxShadow: '0 6px 18px rgba(0,0,0,0.6)'
-                  }} 
+                  }}
                 />
                 <div style={{ flex: '1 1 240px' }}>
                   <p>
-                    <strong>Козлов Алексей Рэмович</strong> (род. 18 ноября 1964 г., Гомель, Новобелица) — 
-                    гвардии рядовой, пулеметчик 4-й парашютно-десантной роты 350-го гвардейского 
-                    парашютно-десантного Краснознаменного ордена Суворова полка 103-й Витебской гвардейской 
+                    <strong>Козлов Алексей Рэмович</strong> (род. 18 ноября 1964 г., Гомель, Новобелица) —
+                    гвардии рядовой, пулеметчик 4-й парашютно-десантной роты 350-го гвардейского
+                    парашютно-десантного Краснознаменного ордена Суворова полка 103-й Витебской гвардейской
                     дивизии ВДВ («полтинник»).
                   </p>
                   <p style={{ marginTop: '0.65rem' }}>
-                    С октября 1984 по апрель 1986 гг. выполнял интернациональный долг в Афганистане. 
-                    Участвовал в сложнейших десантных операциях на перевалах Гиндукуша и в Панджшере. 
+                    С октября 1984 по апрель 1986 гг. выполнял интернациональный долг в Афганистане.
+                    Участвовал в сложнейших десантных операциях на перевалах Гиндукуша и в Панджшере.
                     За мужество и спасение раненых в бою на Гардезской дороге награжден медалью «За отвагу».
                   </p>
                   <p style={{ marginTop: '0.65rem' }}>
-                    Является летописцем первого состава легендарного ансамбля ВДВ «Голубые береты» 
+                    Является летописцем первого состава легендарного ансамбля ВДВ «Голубые береты»
                     (с ноября 1985 года).
                   </p>
                 </div>
               </div>
               <div className="modal-note">
-                Архивная фотография: <code>public/images/hero_photo.jpg</code>.
+                Архивная фотография: <code>public/images/hero_photo.png</code>.
               </div>
             </div>
           )}
@@ -79,7 +77,7 @@ export function ContestModal({ activeModal, onClose }: ContestModalProps) {
           {activeModal === 'audio' && (
             <div>
               <p>
-                Аудиозапись воспоминаний сослуживцев, солдатских песен у костра и первых композиций 
+                Аудиозапись воспоминаний сослуживцев, солдатских песен у костра и первых композиций
                 легендарного ансамбля «Голубые береты» времён Афганской войны (1985–1986 гг.).
               </p>
               <audio className="modal-media" controls src="./audio/voice_archive.mp3">
@@ -91,26 +89,6 @@ export function ContestModal({ activeModal, onClose }: ContestModalProps) {
             </div>
           )}
 
-          {activeModal === 'video' && (
-            <div>
-              <p>
-                Фрагменты интервью с участниками событий, кинохроника полевого быта 350-го полка ВДВ, 
-                встречи с учащимися Гомеля в музее фотографии и кадры хроники перевала Саланг.
-              </p>
-              <video 
-                className="modal-media" 
-                controls 
-                src="./video/documentary.mp4" 
-                poster="./images/360_01.webp"
-              >
-                Ваш браузер не поддерживает элемент video.
-              </video>
-              <p className="modal-note">
-                Подсказка: видео размещается в <code>public/video/documentary.mp4</code> или в виде YouTube embed.
-              </p>
-            </div>
-          )}
-
           {activeModal === 'memory' && (
             <div>
               <p>
@@ -118,19 +96,19 @@ export function ContestModal({ activeModal, onClose }: ContestModalProps) {
               </p>
               <ul style={{ paddingLeft: '1.25rem', marginTop: '0.6rem', lineHeight: '1.75' }}>
                 <li>
-                  <strong>Музей истории печати и фотографии Гомеля:</strong> персональная выставка 
+                  <strong>Музей истории печати и фотографии Гомеля:</strong> персональная выставка
                   «Афганский репортаж» к 35-летию вывода войск (февраль 2024 г.);
                 </li>
                 <li>
-                  <strong>Центральный музей Вооруженных Сил РФ (Москва):</strong> авторские негативы и снимки 
+                  <strong>Центральный музей Вооруженных Сил РФ (Москва):</strong> авторские негативы и снимки
                   А. Р. Козлова приняты на постоянное хранение в государственные фонды;
                 </li>
                 <li>
-                  <strong>Музей боевой славы СШ № 2 им. Г. М. Склезнёва (Гомель):</strong> постоянная 
+                  <strong>Музей боевой славы СШ № 2 им. Г. М. Склезнёва (Гомель):</strong> постоянная
                   экспозиция «Мгновения войны»;
                 </li>
                 <li>
-                  <strong>Уроки мужества и диалоговые площадки:</strong> ежегодные памятные встречи с 
+                  <strong>Уроки мужества и диалоговые площадки:</strong> ежегодные памятные встречи с
                   учащимися Гомельского государственного областного лицея (ГГОЛ).
                 </li>
               </ul>
